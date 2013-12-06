@@ -1,0 +1,83 @@
+/*****************************************************************************/
+/* TVCTape - Videoton TV Computer Tape Emulator                              */
+/* Main File                                                                 */
+/*                                                                           */
+/* Copyright (C) 2013 Laszlo Arvai                                           */
+/* All rights reserved.                                                      */
+/*                                                                           */
+/* This software may be modified and distributed under the terms             */
+/* of the BSD license.  See the LICENSE file for details.                    */
+/*****************************************************************************/
+
+#ifndef __Main_h
+#define __Main_h
+
+///////////////////////////////////////////////////////////////////////////////
+// Includes
+#include <Types.h>
+
+///////////////////////////////////////////////////////////////////////////////
+// Global settings
+#define ENABLE_WAVE_DEVICES
+#define SAMPLE_RATE 44100
+#define WAVE_OUT_BUFFER_LENGTH 32768
+#define WAVE_OUT_BUFFER_COUNT 4
+#define SCREEN_WIDTH 80
+
+///////////////////////////////////////////////////////////////////////////////
+// Constants
+
+// Autostart constants
+#define AUTOSTART_NOT_FORCED			-1
+#define AUTOSTART_FORCED_TO_FALSE	0
+#define AUTOSTART_FORCED_TO_TRUE	1
+
+// Copyprotect constants
+#define COPYPROTECT_NOT_FORCED			-1
+#define COPYPROTECT_FORCED_TO_FALSE	0
+#define COPYPROTECT_FORCED_TO_TRUE	1
+
+///////////////////////////////////////////////////////////////////////////////
+// Types
+
+// Possible file types
+typedef enum 
+{
+	FT_Unknown,		// Invalid
+	FT_CAS,				// CAS file
+	FT_WAV,				// Wave file
+	FT_BAS,				// Basic source file
+	FT_TTP,				// Tape emulation file
+	FT_HEX,				// Intel HEX file
+	FT_BIN,				// Binary file
+	FT_WaveInOut,
+	FT_Dynamic // 
+} FileTypes;
+
+///////////////////////////////////////////////////////////////////////////////
+// Function prototypes
+void AppendOutputFileExtension(char* in_out_file_name);
+void DisplayProgressBar(char* in_title, int in_value, int in_max_value);
+void DisplayMessage(const char* format, ...);
+void DisplayMessageAndClearToLineEnd(const char* format, ...);
+
+///////////////////////////////////////////////////////////////////////////////
+// Global variables
+extern char g_wave_output_file[MAX_PATH_LENGTH];
+
+extern char g_input_file_name_name[MAX_PATH_LENGTH];
+extern FileTypes g_input_file_type;
+extern char g_output_file_name[MAX_PATH_LENGTH];
+extern FileTypes g_output_file_type;
+extern char g_output_wave_file[MAX_PATH_LENGTH];
+extern char g_forced_tape_file_name[MAX_PATH_LENGTH];
+
+
+extern int g_forced_autostart;
+extern bool g_output_message;
+extern bool g_fast_tape_signal;
+extern bool g_strict_format_disabled;
+extern bool g_overwrite_output_file;
+extern bool g_skip_digital_filter;
+
+#endif
