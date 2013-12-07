@@ -17,12 +17,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Consts
 #define	LOOK_AHEAD_BUFFER_LENGTH  64
-#define INPUT_SAMPLE_AMPLITUDE 37500 // it should be 32768 but the digital filter slightly alters the amplitude
+#define INPUT_SAMPLE_AMPLITUDE 32000
 #define TARGET_SAMPLE_AMPLITUDE 120
 #define HIGH_THRESHOLD 4096
 #define LOW_THRESHOLD 2
-//#define DEBUG_CSV
 #define NOISE_KILLER_SILENCE_MAX_LENGTH 5
+#define DEBUG_CSV
 
 ///////////////////////////////////////////////////////////////////////////////
 // Types
@@ -167,6 +167,8 @@ static void DetectEnvelope(INT32 in_sample)
 	BYTE next_look_ahead_buffer_index;
 	SignalSlopeType actual_slope;
 	BYTE peak_index;
+	INT32 peak_sample;
+	bool peak_found = false;
 
 	// peak element index calculation
 	if(l_look_ahead_buffer_index == 0)
@@ -188,80 +190,74 @@ static void DetectEnvelope(INT32 in_sample)
 		}
 	}
 
-#if 0
 	// check for positive peak
 	if(l_prev_sample > 0 && l_prev_slope == SST_Rising && actual_slope == SST_Falling && l_prev_sample > l_peak_threshold)
 	{
-		if(l_mode == WLCMT_NoiseKiller
-		// generate envelope
-		CalculateEnvelope(l_prev_sample, peak_index);
-
-		// store peak position
-		l_last_peak_index = peak_index;
+		peak_found = true;
+		peak_sample = l_prev_sample;
 	}
 
 	// check for negative peak
 	if(l_prev_sample < 0 && l_prev_slope == SST_Falling && actual_slope == SST_Rising && -l_prev_sample > l_peak_threshold)
 	{
-		// generate envelope
-		CalculateEnvelope(-l_prev_sample, peak_index);
-
-		// store peak position
-		l_last_peak_index = peak_index;
+		peak_found = true;
+		peak_sample = -l_prev_sample;
 	}
 
-#endif
-#if 1
 	// check operation mode
 	switch (l_mode)
 	{
 		// automatic level control mode
 		case WLCMT_LevelControl:
-		{
-			// check for positive peak
-			if(l_prev_sample > 0 && l_prev_slope == SST_Rising && actual_slope == SST_Falling && l_prev_sample > l_peak_threshold)
+			if(peak_found)
 			{
 				// generate envelope
-				CalculateEnvelope(l_prev_sample, peak_index);
+				CalculateEnvelope(peak_sample, peak_index);
 
 				// store peak position
 				l_last_peak_index = peak_index;
 			}
-
-			// check for negative peak
-			if(l_prev_sample < 0 && l_prev_slope == SST_Falling && actual_slope == SST_Rising && -l_prev_sample > l_peak_threshold)
-			{
-				// generate envelope
-				CalculateEnvelope(-l_prev_sample, peak_index);
-
-				// store peak position
-				l_last_peak_index = peak_index;
-			}
-		}
-		break;
+			break;
 
 		// noise killer mode (no level control only cut below a certain threshold)
 		case WLCMT_NoiseKiller:
 		{
-			if( SampleABS(in_sample) > l_peak_threshold)
+			if(peak_found)
 			{
-				l_envelope[peak_index] = INPUT_SAMPLE_AMPLITUDE ;
-				l_noise_killer_silence_length = 0;
+				if(peak_sample < l_peak_threshold)
+					peak_sample = 0;
+				else
+				{
+					if(peak_sample < INPUT_SAMPLE_AMPLITUDE)
+						peak_sample = INPUT_SAMPLE_AMPLITUDE;
+
+					l_noise_killer_silence_length = 0;
+				}
+
+				CalculateEnvelope(peak_sample, peak_index);
+				l_last_peak_index = peak_index;
 			}
 			else
 			{
-				l_noise_killer_silence_length++;
-				if(l_noise_killer_silence_length > NOISE_KILLER_SILENCE_MAX_LENGTH)
-					l_envelope[peak_index] = 0;
-				else
-					l_envelope[peak_index] = INPUT_SAMPLE_AMPLITUDE;
-			}
+				if( SampleABS(in_sample) < l_peak_threshold)
+				{
+					l_noise_killer_silence_length++;
+					if(l_noise_killer_silence_length == NOISE_KILLER_SILENCE_MAX_LENGTH)
+					{
+						CalculateEnvelope(0, peak_index);
+						l_last_peak_index = peak_index;
+					}
 
-			l_last_peak_index = peak_index;
+					if(l_noise_killer_silence_length > NOISE_KILLER_SILENCE_MAX_LENGTH)
+					{
+						l_envelope[peak_index] = 0;
+						l_last_peak_index = peak_index;
+					}
+				}
+			}
 		}
 		break;
 	}
-#endif
 
 	// calculate next index in the look ahead buffer
 	next_look_ahead_buffer_index = l_look_ahead_buffer_index + 1;
