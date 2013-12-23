@@ -12,9 +12,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Includes
 #include <stdio.h>
+#include <wchar.h>
 #include "Main.h"
 #include "WaveFile.h"
 #include "WaveMapper.h"
+#include "Console.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
@@ -39,7 +41,7 @@ static void WriteRIFFHeader(void);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Opens wavefile for input
-bool WFOpenInput(char* in_file_name)
+bool WFOpenInput(wchar_t* in_file_name)
 {
 	bool success;
 	RIFFHeaderType riff_header;
@@ -51,10 +53,10 @@ bool WFOpenInput(char* in_file_name)
 	// open wave file
 	data_chunk_found = false;
 	success = true;
-	l_input_wave_file = fopen(in_file_name, "rb" );
+	l_input_wave_file = _wfopen(in_file_name, L"rb" );
 	if(l_input_wave_file == NULL)
 	{
-		fprintf(stderr, "Error: File not found %s.\n", in_file_name);
+		DisplayError(L"Error: File not found %s.\n", in_file_name);
 		success = false;
 	}
 
@@ -65,7 +67,7 @@ bool WFOpenInput(char* in_file_name)
 
 		if( (riff_header.ChunkID != RIFF_HEADER_CHUNK_ID) || (riff_header.Format != RIFF_HEADER_FORMAT_ID) ) 
 		{
-			fprintf(stderr, "Error: Invalid file format.\n");
+			DisplayError(L"Error: Invalid file format.\n");
 			success = false;
 		}
 	}
@@ -86,25 +88,25 @@ bool WFOpenInput(char* in_file_name)
 
 					if(format_chunk.AudioFormat != 1)
 					{
-						fprintf(stderr, "Error: Wav file is not in PCM format.\n");
+						DisplayError(L"Error: Wav file is not in PCM format.\n");
 						success = false;
 					}
 
 					if(format_chunk.SampleRate != 44100)
 					{
-						fprintf(stderr, "Error: Wav file sample rate is not 44100Hz.\n");
+						DisplayError(L"Error: Wav file sample rate is not 44100Hz.\n");
 						success = false;
 					}
 
 					if(format_chunk.NumChannels != 1)
 					{
-						fprintf(stderr, "Error: Only mono format is supported.\n");
+						DisplayError(L"Error: Only mono format is supported.\n");
 						success = false;
 					}
 
 					if((format_chunk.BitsPerSample != 1) && (format_chunk.BitsPerSample != 8) && (format_chunk.BitsPerSample != 16)) 
 					{
-						fprintf(stderr, "Error: Wav file with only 1, 8, 16 bit samples are supported.\n");
+						DisplayError(L"Error: Wav file with only 1, 8, 16 bit samples are supported.\n");
 						success = false;
 					}
 
@@ -187,14 +189,14 @@ void WFCloseInput(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Creates wave file
-bool WFOpenOutput(char* in_file_name)
+bool WFOpenOutput(wchar_t* in_file_name)
 {
 	ChunkHeaderType chunk_header;
 	FormatChunkType format_chunk;
 
 	// create file
 	l_output_wav_file_sample_count = 0;
-	l_output_wav_file = fopen( in_file_name, "w+b" );
+	l_output_wav_file = _wfopen( in_file_name, L"w+b" );
 
 	if( l_output_wav_file == NULL )
 		return false;

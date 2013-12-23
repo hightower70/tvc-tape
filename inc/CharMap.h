@@ -20,7 +20,21 @@
 // Function prototypes
 char TVCCharToANSIIChar(char in_tvc);
 void TVCStringToANSIString(char* out_destination_ansi_string, char* in_source_tvc_string);
+
 char ANSIICharToTVCChar(char in_ansii);
 void ANSIStringToTVCString(char* out_destination_ansi_string, char* in_source_tvc_string);
+
+wchar_t TVCCharToUNICODEChar(char in_tvc);
+void TVCStringToUNICODEString(wchar_t* out_destination_ansi_string, char* in_source_tvc_string);
+
+char TVCCharToASCIIChar(char in_tvc);
+void TVCStringToASCIIString(char* out_destination_ansi_string, char* in_source_tvc_string);
+
+char UNICODECharToTVCChar(wchar_t in_char);
+void UNICODEStringToTVCString(char* out_destination_ansi_string, wchar_t* in_source_tvc_string);
+
+void TVCToPCFilename(wchar_t* out_tvc_file_name, char* in_file_name);
+
+
 
 #endif

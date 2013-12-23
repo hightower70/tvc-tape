@@ -38,10 +38,10 @@ static FILE* l_ttp_output_file = NULL;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Open TTP file for loading data content
-bool TTPOpenInput(char* in_file_name)
+bool TTPOpenInput(wchar_t* in_file_name)
 {
 	// open TTP file
-	l_ttp_input_file = fopen(in_file_name, "rb");
+	l_ttp_input_file = _wfopen(in_file_name, L"rb");
 	if(l_ttp_input_file == NULL)
 		return false;
 
@@ -50,10 +50,10 @@ bool TTPOpenInput(char* in_file_name)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Creates TTP file
-bool TTPCreateOutput(char* in_file_name)
+bool TTPCreateOutput(wchar_t* in_file_name)
 {
 	// save file
-	l_ttp_output_file = fopen(in_file_name,"wb");
+	l_ttp_output_file = _wfopen(in_file_name, L"wb");
 	if(l_ttp_output_file == NULL)
 		return false;
 
@@ -187,7 +187,7 @@ void TTPInitHeader(TTPFileHeaderType* in_file_header)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Saves one buffer content into TTP file
-bool TTPSave(char* in_tape_file_name)
+bool TTPSave(wchar_t* in_tape_file_name)
 {
 	bool success = true;
 	TTPFileHeaderType ttp_file_header;
@@ -201,7 +201,7 @@ bool TTPSave(char* in_tape_file_name)
 	BYTE tape_file_name_length;
 
 	// init
-	tape_file_name_length = strlen(in_tape_file_name);
+	tape_file_name_length = wcslen(in_tape_file_name);
 
 	// file header
 	TTPInitHeader(&ttp_file_header);

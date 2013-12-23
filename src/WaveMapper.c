@@ -22,7 +22,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Opens wave input
-bool WMOpenInput(char* in_file_name)
+bool WMOpenInput(wchar_t* in_file_name)
 {
 	switch(g_input_file_type)
 	{
@@ -80,7 +80,7 @@ void WMCloseInput(void)
 
 //////////////////////////////////////////////////////////////////////////////
 // Opens wave output
-bool WMOpenOutput(char* in_file_name)
+bool WMOpenOutput(wchar_t* in_file_name)
 {
 	switch(g_output_file_type)
 	{

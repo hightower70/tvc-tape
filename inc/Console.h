@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /* TVCTape - Videoton TV Computer Tape Emulator                              */
-/* BAS file format handler                                                   */
+/* Console text output routines                                              */
 /*                                                                           */
 /* Copyright (C) 2013 Laszlo Arvai                                           */
 /* All rights reserved.                                                      */
@@ -8,15 +8,33 @@
 /* This software may be modified and distributed under the terms             */
 /* of the BSD license.  See the LICENSE file for details.                    */
 /*****************************************************************************/
-#ifndef __BASFile_h
-#define __BASFile_h
+
+#ifndef __Console_h
+#define __Console_h
+
 
 ///////////////////////////////////////////////////////////////////////////////
-// Include
-#include "Types.h"
+// Includes
+#include <Windows.h>
+#include <wchar.h>
+#include <io.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdarg.h>
+#include <stdlib.h>
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-bool BASSave(wchar_t* in_file_name);
+void ConsoleInit(void);
+void DisplayError(const wchar_t* format, ...);
+void DisplayMessage(const wchar_t* format, ...);
+void DisplayMessageAndClearToLineEnd(const wchar_t* format, ...);
+void PrintLogo(void);
+void DisplayProgressBar(wchar_t* in_title, int in_value, int in_max_value);
+void PrintHelp(void);
+
 
 #endif

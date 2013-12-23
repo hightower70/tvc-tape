@@ -53,8 +53,8 @@ typedef struct
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-bool CASLoad(char* in_file_name);
-bool CASSave(char* in_file_name);
+bool CASLoad(wchar_t* in_file_name);
+bool CASSave(wchar_t* in_file_name);
 
 bool CASCheckUPMHeaderValidity(CASUPMHeaderType* in_header);
 bool CASCheckHeaderValidity(CASProgramFileHeaderType* in_header);

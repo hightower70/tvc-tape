@@ -21,11 +21,11 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-bool WMOpenInput(char* in_file_name);
+bool WMOpenInput(wchar_t* in_file_name);
 bool WMReadSample(INT32* out_sample);
 void WMCloseInput(void);
 
-bool WMOpenOutput(char* in_file_name);
+bool WMOpenOutput(wchar_t* in_file_name);
 bool WMWriteSample(BYTE in_sample);
 void WMCloseOutput(bool in_force_close);
 

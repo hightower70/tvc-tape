@@ -22,7 +22,7 @@
 #define HIGH_THRESHOLD 4096
 #define LOW_THRESHOLD 2
 #define NOISE_KILLER_SILENCE_MAX_LENGTH 5
-#define DEBUG_CSV
+//#define DEBUG_CSV
 
 ///////////////////////////////////////////////////////////////////////////////
 // Types
@@ -79,7 +79,7 @@ void WLCInit(void)
 
 #ifdef DEBUG_CSV	
 	l_sample_counter = 0;
-	l_debug_output = fopen("debug.csv", "w+t");
+	l_debug_output = _wfopen("debug.csv", "w+t");
 #endif
 }
 
@@ -91,7 +91,7 @@ INT32 WLCProcessSample(INT32 in_sample)
 	INT32 sample;
 
 #ifdef DEBUG_CSV
-	char buffer[1024];
+	wchar_t buffer[1024];
 
 	l_sample_counter++;
 #endif

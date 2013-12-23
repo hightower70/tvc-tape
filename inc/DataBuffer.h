@@ -33,5 +33,6 @@ extern bool g_db_copy_protect;
 extern bool g_db_autostart;
 extern char g_db_file_name[DB_MAX_FILENAME_LENGTH+1];
 extern BYTE g_db_program_type;
+extern bool g_db_crc_error_detected;
 
 #endif

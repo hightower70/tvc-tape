@@ -24,7 +24,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-bool BINSave(char* in_file_name);
-bool BINLoad(char* in_file_name);
+bool BINSave(wchar_t* in_file_name);
+bool BINLoad(wchar_t* in_file_name);
 
 #endif

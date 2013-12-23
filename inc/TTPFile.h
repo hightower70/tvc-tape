@@ -36,10 +36,10 @@ typedef struct
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-bool TTPOpenInput(char* in_file_name);
-bool TTPCreateOutput(char* in_file_name);
+bool TTPOpenInput(wchar_t* in_file_name);
+bool TTPCreateOutput(wchar_t* in_file_name);
 bool TTPLoad(void);
-bool TTPSave(char* in_tape_file_name);
+bool TTPSave(wchar_t* in_tape_file_name);
 void TTPCloseInput(void);
 void TTPCloseOutput(void);
 

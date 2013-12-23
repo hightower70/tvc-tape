@@ -11,6 +11,8 @@
 #ifndef __Types_h
 #define __Types_h
 
+#include <wchar.h>
+
 // bool type
 #ifndef bool
 typedef unsigned char	bool;	// always 8 bit

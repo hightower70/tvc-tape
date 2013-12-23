@@ -53,7 +53,7 @@ static int l_current_waveout_buffer_length;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Opens wave input device
-bool WDOpenInput(char* in_file_name)
+bool WDOpenInput(wchar_t* in_file_name)
 {
 	return false;
 }
@@ -77,7 +77,7 @@ void WDCloseInput(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Opens wave output device
-bool WDOpenOutput(char* in_file_name)
+bool WDOpenOutput(wchar_t* in_file_name)
 {
 	MMRESULT result;
   WAVEFORMATEX wave_format;

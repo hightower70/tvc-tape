@@ -54,6 +54,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\inc</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -83,6 +84,7 @@
     <ClCompile Include="src\BINFile.c" />
     <ClCompile Include="src\CASFile.c" />
     <ClCompile Include="src\CharMap.c" />
+    <ClCompile Include="src\Console.c" />
     <ClCompile Include="src\CRC.c" />
     <ClCompile Include="src\DataBuffer.c" />
     <ClCompile Include="src\FileUtils.c" />
@@ -102,6 +104,7 @@
     <ClInclude Include="inc\BINFile.h" />
     <ClInclude Include="inc\CASFile.h" />
     <ClInclude Include="inc\CharMap.h" />
+    <ClInclude Include="inc\Console.h" />
     <ClInclude Include="inc\CRC.h" />
     <ClInclude Include="inc\DataBuffer.h" />
     <ClInclude Include="inc\DDS.h" />

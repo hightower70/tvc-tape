@@ -14,7 +14,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Includes
-#include <Types.h>
+#include <Types.h> 
+#include <wchar.h>
+#include "FileUtils.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global settings
@@ -40,37 +42,20 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Types
 
-// Possible file types
-typedef enum 
-{
-	FT_Unknown,		// Invalid
-	FT_CAS,				// CAS file
-	FT_WAV,				// Wave file
-	FT_BAS,				// Basic source file
-	FT_TTP,				// Tape emulation file
-	FT_HEX,				// Intel HEX file
-	FT_BIN,				// Binary file
-	FT_WaveInOut,
-	FT_Dynamic // 
-} FileTypes;
-
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-void AppendOutputFileExtension(char* in_out_file_name);
-void DisplayProgressBar(char* in_title, int in_value, int in_max_value);
-void DisplayMessage(const char* format, ...);
-void DisplayMessageAndClearToLineEnd(const char* format, ...);
+void AppendOutputFileExtension(wchar_t* in_out_file_name);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
-extern char g_wave_output_file[MAX_PATH_LENGTH];
+extern wchar_t g_wave_output_file[MAX_PATH_LENGTH];
 
-extern char g_input_file_name_name[MAX_PATH_LENGTH];
+extern wchar_t g_input_file_name_name[MAX_PATH_LENGTH];
 extern FileTypes g_input_file_type;
-extern char g_output_file_name[MAX_PATH_LENGTH];
+extern wchar_t g_output_file_name[MAX_PATH_LENGTH];
 extern FileTypes g_output_file_type;
-extern char g_output_wave_file[MAX_PATH_LENGTH];
-extern char g_forced_tape_file_name[MAX_PATH_LENGTH];
+extern wchar_t g_output_wave_file[MAX_PATH_LENGTH];
+extern wchar_t g_forced_tape_file_name[MAX_PATH_LENGTH];
 
 
 extern int g_forced_autostart;

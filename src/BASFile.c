@@ -19,6 +19,7 @@
 #include "CharMap.h"
 #include "DataBuffer.h"
 #include "FileUtils.h"
+#include "Console.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -52,7 +53,7 @@ extern const char* l_char_map[];
 
 ///////////////////////////////////////////////////////////////////////////////
 // Saves BAS file
-bool BASSave(char* in_file_name)
+bool BASSave(wchar_t* in_file_name)
 {
 	BASLINE* current_line;
 	BYTE* current_data_pos;
@@ -66,10 +67,10 @@ bool BASSave(char* in_file_name)
 	GenerateUniqueFileName(in_file_name);
 
 	// create BAS file
-	bas_file = fopen(in_file_name, "wt");
+	bas_file = _wfopen(in_file_name, L"wt");
 	if(bas_file == NULL)
 	{
-		fprintf(stderr, "Can't create output file\n");
+		DisplayError(L"Can't create output file\n");
 		return false;
 	}
 
@@ -81,7 +82,7 @@ bool BASSave(char* in_file_name)
 		// check basic format
 		if(current_line->LineLength < sizeof (BASLINE))
 		{
-	    fprintf(stderr, "Broken BASIC program\n");
+	    DisplayError(L"Broken BASIC program\n");
 	    return false;
 		}	
 		
@@ -141,7 +142,7 @@ bool BASSave(char* in_file_name)
 		}
 
 
-		fprintf (bas_file, "\n");
+		fprintf(bas_file, "\n");
 		current_line = next_line;
 	}
 

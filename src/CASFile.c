@@ -31,7 +31,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Loads CAS file
-bool CASLoad(char* in_file_name)
+bool CASLoad(wchar_t* in_file_name)
 {
 	FILE* cas_file = NULL;
 	bool success = true;
@@ -39,7 +39,7 @@ bool CASLoad(char* in_file_name)
 	CASProgramFileHeaderType program_header;
 
 	// open CAS file
-	cas_file = fopen(in_file_name, "rb");
+	cas_file = _wfopen(in_file_name, L"rb");
 
 	if(cas_file == NULL)
 		success = false;
@@ -72,7 +72,8 @@ bool CASLoad(char* in_file_name)
 			g_db_autostart = (program_header.Autorun != 0);
 
 			// generate TVC filename
-			GenerateTVCFileName(g_db_file_name, in_file_name);
+			// TODO:  filenév generálás
+			//GenerateTVCFileName(g_db_file_name, in_file_name);
 		}	
 	}
 
@@ -85,14 +86,14 @@ bool CASLoad(char* in_file_name)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Saves CAS file
-bool CASSave(char* in_file_name)
+bool CASSave(wchar_t* in_file_name)
 {
 	CASUPMHeaderType upm_header;							
 	CASProgramFileHeaderType program_header;
 	FILE* cas_file;
 
 	// save file
-	cas_file = fopen(in_file_name,"wb");
+	cas_file = _wfopen(in_file_name, L"wb");
 	if(cas_file == NULL)
 		return false;
 

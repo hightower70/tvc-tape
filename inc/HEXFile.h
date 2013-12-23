@@ -24,7 +24,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-bool HEXSave(char* in_file_name);
-bool HEXLoad(char* in_file_name);
+bool HEXSave(wchar_t* in_file_name);
+bool HEXLoad(wchar_t* in_file_name);
 
 #endif

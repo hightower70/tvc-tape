@@ -18,11 +18,11 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-bool WDOpenInput(char* in_file_name);
+bool WDOpenInput(wchar_t* in_file_name);
 bool WDReadSample(INT32* out_sample);
 void WDCloseInput(void);
 
-bool WDOpenOutput(char* in_file_name);
+bool WDOpenOutput(wchar_t* in_file_name);
 bool WDWriteSample(BYTE in_sample);
 void WDCloseOutput(bool in_force_close);
 

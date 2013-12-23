@@ -24,6 +24,7 @@
 #include "Main.h"
 #include "CharMap.h"
 #include "DataBuffer.h"
+#include "Console.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -115,7 +116,6 @@ static TAPESectorEndType l_sector_end;
 static WORD l_current_sector_length;
 static WORD l_sector_end_period_count;
 static DWORD l_sync_period_length;
-static bool l_crc_error_detected;
 static bool l_header_block_valid;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -152,8 +152,8 @@ bool TAPELoad(void)
 	bool success = true;
 	INT32	sample;
 	bool tape_file_loaded = false;
-	int al;
 
+	// scan for files
 	while(success && !tape_file_loaded)
 	{
 		success = WMReadSample(&sample);
@@ -170,7 +170,7 @@ bool TAPELoad(void)
 			WFWriteSample((BYTE)(sample + BYTE_SAMPLE_ZERO_VALUE));
 
 			if(tape_file_loaded)
-				DisplayMessage("\r");
+				DisplayMessage(L"\r");
 			else
 				DisplayInputDataProgress();
 		}
@@ -189,7 +189,7 @@ void TAPEClose(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Saves Tape file
-bool TAPESave(char* in_file_name)
+bool TAPESave(wchar_t* in_file_name)
 {
 	TAPEBlockHeaderType tape_block_header;
 	TAPESectorHeaderType tape_sector_header;
@@ -267,8 +267,8 @@ bool TAPESave(char* in_file_name)
 	if(success)
 		success = GenerateDDSSignal(FREQ_LEADING, 5);
 
-	if(g_output_file_type == FT_WaveInOut && g_output_message)
-		fprintf(stdout,"\n");
+	if(g_output_file_type == FT_WaveInOut)
+		DisplayMessage(L"\n");
 
 	// create data block
 	sector_count = (g_db_buffer_length + 255) / 256;
@@ -344,8 +344,8 @@ bool TAPESave(char* in_file_name)
 
 	WMCloseOutput(!success);
 
-	if(g_output_file_type == FT_WaveInOut && g_output_message)
-		fprintf(stdout,"\n");
+	if(g_output_file_type == FT_WaveInOut)
+		DisplayMessage(L"\n");
 
 	return success;
 }
@@ -390,7 +390,7 @@ void TAPEInitBlockHeader(TAPEBlockHeaderType* out_block_header)
 static void DisplayOutputHeaderProgress(int in_pos, int in_max_pos)
 {
 	if(g_output_file_type == FT_WaveInOut)
-		DisplayProgressBar("Saving header", in_pos, in_max_pos);
+		DisplayProgressBar(L"Saving header", in_pos, in_max_pos);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -398,7 +398,7 @@ static void DisplayOutputHeaderProgress(int in_pos, int in_max_pos)
 static void DisplayOutputDataProgress(int in_pos, int in_max_pos)
 {
 	if(g_output_file_type == FT_WaveInOut)
-		DisplayProgressBar("Saving data  ", in_pos, in_max_pos);
+		DisplayProgressBar(L"Saving data  ", in_pos, in_max_pos);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -472,8 +472,7 @@ static void DisplayInputDataProgress(void)
 	BYTE percentage;
 	DWORD total_seconds;
 	WORD hour, minutes, seconds;
-	int pos;
-	char buffer[DB_MAX_FILENAME_LENGTH+1];
+	wchar_t buffer[DB_MAX_FILENAME_LENGTH+1];
 
 	switch(g_input_file_type)
 	{
@@ -493,18 +492,17 @@ static void DisplayInputDataProgress(void)
 
 				if(percentage != l_prev_input_percentage || total_seconds != l_prev_input_total_seconds)
 				{
-					// generate file name
+					// generate file name and display status information
 					if(l_header_block_valid)
 					{
-						TVCStringToANSIString(buffer, g_db_file_name);
+						TVCStringToUNICODEString(buffer, g_db_file_name);
+						DisplayMessageAndClearToLineEnd(L"Processing: %3d%% (%0uh%02um%02us), Loading: %s", percentage, hour, minutes, seconds, buffer);
 					}
 					else
 					{
-						buffer[0] = '\0';
+						DisplayMessageAndClearToLineEnd(L"Processing: %3d%% (%0uh%02um%02us)", percentage, hour, minutes, seconds);
 					}
 
-					// display status information
-					DisplayMessageAndClearToLineEnd("Processing: %3d%% (%0uh%02um%02us), Loading: %s, Length: %d bytes", percentage, hour, minutes, seconds, buffer, g_db_buffer_length);
 					l_prev_input_percentage = percentage;
 					l_prev_input_total_seconds = total_seconds;
 				}
@@ -537,7 +535,7 @@ bool DecodeSample(INT32 in_sample)
 	low_period_length = l_period_low_length;
 	current_phase = l_current_phase;
 
-	if(l_sample_index==19738)
+	if(l_sample_index==497529)
 		period_length = 6;
 
 	if(in_sample != 0)
@@ -815,7 +813,7 @@ static bool StoreByte(BYTE in_data_byte)
 						l_header_block_valid = false;
 
 					g_db_buffer_index = 0;
-					l_crc_error_detected = false;
+					g_db_crc_error_detected = false;
 					CRCReset();
 					CRCAddBlock(((BYTE*)&l_block_header + 1), sizeof(l_block_header)-1);
 				}
@@ -954,7 +952,7 @@ static bool StoreByte(BYTE in_data_byte)
 					// data block
 					case TAPE_BLOCKHDR_TYPE_DATA:
 						if(l_sector_end.CRC != CRCGet())
-							l_crc_error_detected = true;
+							g_db_crc_error_detected = true;
 
 						// if there is no more data to read
 						if(g_db_buffer_index >= g_db_buffer_length || l_sector_end.EOFFlag == TAPE_SECTOR_EOF)

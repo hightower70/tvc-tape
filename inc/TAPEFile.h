@@ -74,14 +74,14 @@ typedef struct
 					 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-bool TAPESave(char* in_file_name);
+bool TAPESave(wchar_t* in_file_name);
 void TAPEInit(void);
 bool TAPELoad(void);
 void TAPEClose(void);
 
 /*
-bool TAPEOpenInput(char* in_file_name);
-bool TAPECreateOutput(char* in_file_name);
+bool TAPEOpenInput(wchar_t* in_file_name);
+bool TAPECreateOutput(wchar_t* in_file_name);
 bool TAPELoad(void);
 bool TAPESave(void);
 void TAPECloseInput(void);

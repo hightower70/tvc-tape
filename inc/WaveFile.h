@@ -59,11 +59,11 @@ extern DWORD g_input_wav_file_sample_index;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Functions prototypes
-bool WFOpenInput(char* in_file_name);
+bool WFOpenInput(wchar_t* in_file_name);
 bool WFReadSample(INT32* out_sample);
 void WFCloseInput(void);
 
-bool WFOpenOutput(char* in_file_name);
+bool WFOpenOutput(wchar_t* in_file_name);
 void WFWriteSample(BYTE in_sample);
 void WFCloseOutput(bool in_force_close);
 
