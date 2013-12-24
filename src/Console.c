@@ -90,6 +90,7 @@ void DisplayProgressBar(wchar_t* in_title, int in_value, int in_max_value)
 {
 	wchar_t buffer[20];
 	int pos;
+	int i;
 
 	if(!g_output_message)
 		return;
@@ -99,7 +100,8 @@ void DisplayProgressBar(wchar_t* in_title, int in_value, int in_max_value)
 
 	pos = in_value * 10 / in_max_value;
 
-	memset(buffer,'=',pos);
+	for(i=0; i<pos; i++)
+		buffer[i] = '=';
 	buffer[pos] = '\0';
 
 	fwprintf(stdout, L"%s: %3d%% [%-10s]\r", in_title, in_value * 100 / in_max_value, buffer);
@@ -112,20 +114,27 @@ void PrintHelp(void)
 	if(g_output_message)
 	{
 		fwprintf(stderr,
-			L" TVCTape is a free software for converting between Videoton TV Computer\n"
-			L" CAS, BAS and Tape audio data format.\n"
-			L"    Usage:  TVCTape [options] file1 [file2]\n\n"
-			L"        -q           quiet (no screen output, only errors)\n"
-			L"        -h           display this help\n\n"
-			L"        -a           overrides autostart settings (0 - no autostart, 1 - autostart)\n"
-			L"        -c           overrides copyprotect settings (0 - no copyprotect, 1 - copyprotected)\n"
-			L"        -o           overwrite output file\n"
-			L"        -d           disable strict format checking of tape format\n"
-			L"        -f           fast tape signal generation\n"
-			L"        -n filename  forces tape file name (stored in tape files)\n"
-			L"        -s filename  saves list of file name of the created output files\n"
-			L"        -l filename  load input file names from a list instead of using command line parameter\n"
-			L"        -p           skip digital filter when processing wav data\n"
+			L"TVCTape is a free software for converting between Videoton TV Computer\n"
+			L"CAS, BAS and Tape audio data format.\n\n"
+			L" Usage:  TVCTape [options] file1 [file2]\n\n"
+			L"  -q           quiet (no screen output, only errors)\n"
+			L"  -h           display this help\n"
+			L"  -a           overrides autostart settings\n"
+			L"               (0 - no autostart, 1 - autostart)\n"
+			L"  -c           overrides copyprotect settings\n"
+			L"               (0 - no copyprotect, 1 - copyprotected)\n"
+			L"  -o           overwrite output file\n"
+			L"  -d           disable strict format checking of tape format\n"
+			L"  -n filename  forces tape file name (stored in tape files)\n"
+			L"  -s filename  saves list of file name of the created output files\n"
+			L"  -l filename  load input file names from a text file instead of using \n"
+			L"               command line parameter\n"
+			L"  -p           skip digital filter when processing wav data\n"
+			L"  -g f,g,l     changes wave generation parameters\n"
+			L"     f = frequency offset in percentage (default is 0%%)\n"
+			L"     g = length of the gap in ms between header and data blocks (default is 1000ms)\n"
+			L"     l = length of the block leading signal in ms (default is 4812ms)\n"
+			L"  -w filename  stores preprocessed wave data into the specified wav file\n"
 			L"\n"
 			L"	- 'file1' and 'file2' can be 'CAS', 'BAS', 'TTP', 'BIN', 'HEX' (Intel), 'WAV' (PCM) or 'WAVE:' (wave in/out device).\n"
 			L" If two files are specified then it converts from file1->file2.\n"
@@ -135,7 +144,9 @@ void PrintHelp(void)
 			L"  BAS: Converts to CAS file with the same name\n"
 			L"  WAVE: Converts signal from wave in to one or more CAS files\n"
 			L"\n"
-			L"	 Examples:\n"
-			L"	  TVCTape WAVE: TEST.CAS     Converts tape signal coming from the default WaveIn device to CAS file\n");
+			L" Examples:\n"
+			L"  TVCTape WAVE:              Converts tape signal coming from the default WaveIn device to one or more CAS files\n"
+			L"	TVCTape WAVE: TEST.CAS     Converts tape signal coming from the default WaveIn device to CAS file\n"
+			L"	TVCTape TEST.CAS WAVE:     Converts TEST.CAS file to tape signal and outputs it to the default WaveOut device\n");
 	}
 }

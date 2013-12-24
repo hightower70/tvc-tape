@@ -92,6 +92,8 @@ bool TAPEValidateBlockHeader(TAPEBlockHeaderType* in_block_header);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
-
+extern WORD g_frequency_offset;
+extern WORD g_leading_length;
+extern WORD g_gap_length;
 
 #endif

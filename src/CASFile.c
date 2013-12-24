@@ -72,8 +72,7 @@ bool CASLoad(wchar_t* in_file_name)
 			g_db_autostart = (program_header.Autorun != 0);
 
 			// generate TVC filename
-			// TODO:  filenév generálás
-			//GenerateTVCFileName(g_db_file_name, in_file_name);
+			PCToTVCFilename(g_db_file_name, in_file_name);
 		}	
 	}
 

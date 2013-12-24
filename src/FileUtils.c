@@ -169,15 +169,17 @@ void GetFileNameWithoutExtension(wchar_t* in_file_name, wchar_t* in_path)
 // Convert PC filename to TVC filename
 void PCToTVCFilename(char* out_tvc_file_name, wchar_t* in_file_name)
 {
-	//// get filename only
-	//GetFileNameWithoutExtension(buffer, in_file_name);
+	wchar_t buffer[MAX_PATH_LENGTH];
 
-	//// limit length
-	//if(wcslen(buffer)>DB_MAX_FILENAME_LENGTH)
-	//	g_db_file_name[DB_MAX_FILENAME_LENGTH] = '\0';
+	// get filename only
+	GetFileNameWithoutExtension(buffer, in_file_name);
 
-	//// convert charmap
-	// ANSIStringToTVCString(out_tvc_file_name, buffer);
+	// limit length
+	if(wcslen(buffer)>DB_MAX_FILENAME_LENGTH)
+		buffer[DB_MAX_FILENAME_LENGTH] = '\0';
+
+	// convert charmap
+	UNICODEStringToTVCString(out_tvc_file_name, buffer);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

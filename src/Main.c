@@ -37,6 +37,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Local function prototypes
 static void CloseInputFileList(void);
+static bool ParseWaveGenerationParameters(wchar_t* in_param);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -52,7 +53,6 @@ wchar_t g_forced_tape_file_name[MAX_PATH_LENGTH];
 int g_forced_autostart = AUTOSTART_NOT_FORCED;
 int g_forced_copyprotect = COPYPROTECT_NOT_FORCED;
 bool g_overwrite_output_file = false;
-bool g_fast_tape_signal = false;
 bool g_strict_format_disabled = false;
 bool g_skip_digital_filter = false;
 
@@ -135,10 +135,6 @@ int wmain( int argc, wchar_t **argv )
 					g_overwrite_output_file = true;
 					break;
 
-				case 'f':
-					g_fast_tape_signal = true;
-					break;
-
 				case 'w':
 					if( i + 1 < argc )
 					{
@@ -157,6 +153,18 @@ int wmain( int argc, wchar_t **argv )
 
 				case 'p':
 					g_skip_digital_filter = true;
+					break;
+
+				case 'g':
+					if( i + 1 < argc )
+					{
+						i++;
+						success = ParseWaveGenerationParameters(argv[i]);
+					}
+					else
+					{
+						success = false;
+					}	
 					break;
 
 				case 'n':
@@ -638,3 +646,40 @@ static void CloseInputFileList(void)
 	}
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Parses wave generation parameters
+static bool ParseWaveGenerationParameters(wchar_t* in_param)
+{
+	wchar_t* token;
+	int index;
+	int value;
+
+	token = wcstok( in_param, L"," ); 
+
+	index = 0;
+	while( token != NULL && index < 3 )
+  {												
+		value = _wtoi(token);
+
+		switch (index)
+		{
+			case 0:
+				g_frequency_offset = value;
+				break;
+
+			case 1:
+				g_gap_length = value;
+				break;
+
+			case 2:
+				g_leading_length = value;
+				break;
+		}
+
+    // Get next token: 
+		token = wcstok( NULL, L"," );
+		index++;
+  }
+
+	return true;
+}

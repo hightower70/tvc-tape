@@ -50,5 +50,7 @@ bool StringStartsWith(const wchar_t* in_string, const wchar_t* in_prefix);
 
 																									 
 void GenerateTVCFileName(wchar_t* out_tvc_file_name, wchar_t* in_file_name);
+void PCToTVCFilename(char* out_tvc_file_name, wchar_t* in_file_name);
+
 
 #endif

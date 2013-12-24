@@ -81,6 +81,7 @@ static int IntABS(int in_value);
 static bool StoreByteInStruct(BYTE in_data_byte, void* in_struct, size_t in_size, bool in_add_to_crc);
 static void SetSectorLength(BYTE in_sector_length);
 static void ChangeReaderStatus(TapeReaderStatusType in_new_status);
+static WORD OffsetFrequency(WORD in_frequency);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
@@ -122,6 +123,10 @@ static bool l_header_block_valid;
 // Global variables
 
 static int l_sample_index = 0;
+
+WORD g_frequency_offset = 0;
+WORD g_leading_length = 4812;
+WORD g_gap_length = 1000;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Initialization of tape functions
@@ -265,7 +270,7 @@ bool TAPESave(wchar_t* in_file_name)
 
 	// closing header block
 	if(success)
-		success = GenerateDDSSignal(FREQ_LEADING, 5);
+		success = GenerateDDSSignal(OffsetFrequency(FREQ_LEADING), 5);
 
 	if(g_output_file_type == FT_WaveInOut)
 		DisplayMessage(L"\n");
@@ -332,14 +337,11 @@ bool TAPESave(wchar_t* in_file_name)
 
 	// closing block
 	if(success)
-		success =	GenerateDDSSignal(FREQ_LEADING, 5);
+		success =	GenerateDDSSignal(OffsetFrequency(FREQ_LEADING), 5);
 
 	if(success)
 	{
-		if(g_fast_tape_signal)
-			success = GenerateDDSSilence(50);
-		else
-			success = GenerateDDSSilence(1000);
+		success = GenerateDDSSilence(50);
 	}
 
 	WMCloseOutput(!success);
@@ -402,26 +404,31 @@ static void DisplayOutputDataProgress(int in_pos, int in_max_pos)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Offsetting frequency
+static WORD OffsetFrequency(WORD in_frequency)
+{
+	if(g_frequency_offset == 0)
+		return in_frequency;
+
+	return (WORD)((DWORD)in_frequency * (100 + g_frequency_offset) / 100);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Encodes block leading
 static bool EncodeBlockLeading(void)
 {
 	bool success;
+	WORD period_count = (WORD)((((DWORD)OffsetFrequency(FREQ_LEADING)) * g_leading_length + 500 ) / 1000);
 
-	if(g_fast_tape_signal)
-		success = GenerateDDSSilence(50);
-	else
-		success = GenerateDDSSilence(1000);
+	success = GenerateDDSSilence(g_gap_length);
 
 	if(success)
 	{
-		if(g_fast_tape_signal)
-			success = GenerateDDSSignal(FREQ_LEADING, 1200);
-		else
-			success = GenerateDDSSignal(FREQ_LEADING, 10240);
+			success = GenerateDDSSignal(OffsetFrequency(FREQ_LEADING), period_count);
 	}
 
 	if(success)
-		success = GenerateDDSSignal(FREQ_SYNC, 1);
+		success = GenerateDDSSignal(OffsetFrequency(FREQ_SYNC), 1);
 
 	return success;
 }
@@ -437,11 +444,11 @@ static bool EncodeByte(BYTE in_data)
 	{
 		if( (in_data & 0x01) == 0 )
 		{
-			success = GenerateDDSSignal(FREQ_ZERO, 1);
+			success = GenerateDDSSignal(OffsetFrequency(FREQ_ZERO), 1);
 		}
 		else
 		{
-			success = GenerateDDSSignal(FREQ_ONE, 1);
+			success = GenerateDDSSignal(OffsetFrequency(FREQ_ONE), 1);
 		}
 
 		in_data >>= 1;
