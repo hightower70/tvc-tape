@@ -21,10 +21,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Global settings
 #define ENABLE_WAVE_DEVICES
-#define SAMPLE_RATE 44100
-#define WAVE_OUT_BUFFER_LENGTH 32768
-#define WAVE_OUT_BUFFER_COUNT 4
 #define SCREEN_WIDTH 80
+#define SAMPLE_RATE 44100
+#define WAVEOUT_BUFFER_LENGTH 32768
+#define WAVEOUT_BUFFER_COUNT 4
+#define WAVEIN_BUFFER_LENGTH 8192
+#define WAVEIN_BUFFER_COUNT 16
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -62,6 +64,5 @@ extern int g_forced_autostart;
 extern bool g_output_message;
 extern bool g_strict_format_disabled;
 extern bool g_overwrite_output_file;
-extern bool g_skip_digital_filter;
 
 #endif

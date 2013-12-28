@@ -12,6 +12,103 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Includes
 #include "WaveFilter.h"
+
+///////////////////////////////////////////////////////////////////////////////
+// Function prototypes
+INT32 FilterStrong(INT32 in_new_sample);
+INT32 FilterFast(INT32 in_new_sample);
+
+///////////////////////////////////////////////////////////////////////////////
+// Global variables
+BYTE g_filter_type = 1;
+
+///////////////////////////////////////////////////////////////////////////////
+// Filters sample
+INT32 WFProcessSample(INT32 in_new_sample)
+{
+	switch(g_filter_type)
+	{
+		case 1:
+			return FilterFast(in_new_sample);
+
+		case 2:
+			return FilterStrong(in_new_sample);
+
+		default:
+			return in_new_sample;
+	}
+}
+
+/**************************************************************
+WinFilter version 0.8
+http://www.winfilter.20m.com
+akundert@hotmail.com
+
+Filter type: Band Pass
+Filter model: Butterworth
+Filter order: 2
+Sampling Frequency: 44 KHz
+Fc1 and Fc2 Frequencies: 1.000000 KHz and 3.000000 KHz
+Coefficents Quantization: 16-bit
+
+Z domain Zeros
+z = -1.000000 + j 0.000000
+z = -1.000000 + j 0.000000
+z = 1.000000 + j 0.000000
+z = 1.000000 + j 0.000000
+
+Z domain Poles
+z = 0.928828 + j -0.135679
+z = 0.928828 + j 0.135679
+z = 0.816778 + j -0.302049
+z = 0.816778 + j 0.302049
+***************************************************************/
+#define NCoef 4
+#define DCgain 128
+
+INT32 FilterFast(INT32 NewSample)
+{
+    INT16 ACoef[NCoef+1] = {
+        10231,
+            0,
+        -20462,
+            0,
+        10231
+    };
+
+    INT16 BCoef[NCoef+1] = {
+         4096,
+        -14300,
+        19145,
+        -11666,
+         2737
+    };
+
+    static INT64 y[NCoef+1]; //output samples
+    //Warning!!!!!! This variable should be signed (input sample width + Coefs width + 4 )-bit width to avoid saturation.
+
+		static INT32 x[NCoef+1]; //input samples
+    int n;
+
+    //shift the old samples
+    for(n=NCoef; n>0; n--) {
+       x[n] = x[n-1];
+       y[n] = y[n-1];
+    }
+
+    //Calculate the new output
+    x[0] = NewSample;
+    y[0] = (INT64)ACoef[0] * x[0];
+    for(n=1; n<=NCoef; n++)
+        y[0] += (INT64)ACoef[n] * x[n] - BCoef[n] * y[n];
+
+    y[0] /= BCoef[0];
+    
+    return (INT32)(y[0] / DCgain);
+}
+#undef NCoef
+#undef DCgain
+
 /**************************************************************
 WinFilter version 0.8
 http://www.winfilter.20m.com
@@ -50,10 +147,9 @@ z = 0.894087 + j -0.404846
 z = 0.894087 + j 0.404846
 ***************************************************************/
 #define Ntap 64
-
 #define DCgain 262144
 
-INT32 WFProcessSample(INT32 in_new_sample)
+INT32 FilterStrong(INT32 in_new_sample)
 {
 	static INT16 FIRCoef[Ntap] = { 
          4354,
@@ -137,6 +233,8 @@ INT32 WFProcessSample(INT32 in_new_sample)
     
     return (INT32)(y / DCgain);
 }
+#undef Ntap
+#undef DCgain
 
 #if 0
 /**************************************************************

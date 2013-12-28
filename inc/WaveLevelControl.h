@@ -30,6 +30,10 @@ INT32 WLCProcessSample(INT32 in_sample);
 void WLCClose(void);
 void WLCSetMode(WaveLevelControlModeType in_mode);
 
+///////////////////////////////////////////////////////////////////////////////
+// Global variables
+extern BYTE g_wave_level_control_mode;
+
 
 #endif
 

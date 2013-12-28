@@ -18,7 +18,7 @@
 // Consts
 #define	LOOK_AHEAD_BUFFER_LENGTH  64
 #define INPUT_SAMPLE_AMPLITUDE 32000
-#define TARGET_SAMPLE_AMPLITUDE 120
+#define TARGET_SAMPLE_AMPLITUDE 32000
 #define HIGH_THRESHOLD 4096
 #define LOW_THRESHOLD 2
 #define NOISE_KILLER_SILENCE_MAX_LENGTH 5
@@ -50,6 +50,10 @@ static INT32 l_noise_killer_silence_length = 0;
 static int l_sample_counter;
 static FILE* l_debug_output;
 #endif
+
+///////////////////////////////////////////////////////////////////////////////
+// Global variables
+BYTE g_wave_level_control_mode = 1;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
@@ -90,6 +94,9 @@ INT32 WLCProcessSample(INT32 in_sample)
 	// get old sample
 	INT32 sample;
 
+	if(g_wave_level_control_mode != 1)
+		return in_sample;
+
 #ifdef DEBUG_CSV
 	wchar_t buffer[1024];
 
@@ -124,7 +131,7 @@ INT32 WLCProcessSample(INT32 in_sample)
 	}
 
 	return sample;
-}
+ }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Closes level control

@@ -26,6 +26,7 @@ DWORD g_input_wav_file_sample_index;
 static WORD l_input_wav_file_bits_per_sample;
 
 static FILE* l_output_wav_file = NULL;
+static FormatChunkType l_output_wav_file_format_chunk;
 static DWORD l_output_wav_file_sample_count;
 static DWORD l_output_wav_file_sample_index;
 static WORD l_output_wav_file_bits_per_sample;
@@ -189,10 +190,9 @@ void WFCloseInput(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Creates wave file
-bool WFOpenOutput(wchar_t* in_file_name)
+bool WFOpenOutput(wchar_t* in_file_name, BYTE in_bits_per_sample)
 {
 	ChunkHeaderType chunk_header;
-	FormatChunkType format_chunk;
 
 	// create file
 	l_output_wav_file_sample_count = 0;
@@ -206,19 +206,19 @@ bool WFOpenOutput(wchar_t* in_file_name)
 
 	// write format chunk header
 	chunk_header.ChunkID = CHUNK_ID_FORMAT;
-	chunk_header.ChunkSize = sizeof(format_chunk);
+	chunk_header.ChunkSize = sizeof(l_output_wav_file_format_chunk);
 
 	fwrite( &chunk_header, sizeof(chunk_header), 1, l_output_wav_file );
 
 	// write format chunk
-	format_chunk.AudioFormat		= 1;
-	format_chunk.SampleRate			= SAMPLE_RATE;
-	format_chunk.NumChannels		= 1;
-	format_chunk.BitsPerSample	= 8;
-	format_chunk.BlockAlign			= 1;
-	format_chunk.ByteRate				= SAMPLE_RATE;
+	l_output_wav_file_format_chunk.AudioFormat		= 1;
+	l_output_wav_file_format_chunk.SampleRate			= SAMPLE_RATE;
+	l_output_wav_file_format_chunk.NumChannels		= 1;
+	l_output_wav_file_format_chunk.BitsPerSample	= in_bits_per_sample;
+	l_output_wav_file_format_chunk.BlockAlign			= 1;
+	l_output_wav_file_format_chunk.ByteRate				= l_output_wav_file_format_chunk.SampleRate * l_output_wav_file_format_chunk.NumChannels * l_output_wav_file_format_chunk.BitsPerSample / 8;
 
-	fwrite( &format_chunk, sizeof(format_chunk), 1, l_output_wav_file );
+	fwrite( &l_output_wav_file_format_chunk, sizeof(l_output_wav_file_format_chunk), 1, l_output_wav_file );
 
 	// write chunk header
 	chunk_header.ChunkID = CHUNK_ID_DATA;
@@ -231,12 +231,21 @@ bool WFOpenOutput(wchar_t* in_file_name)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Write sample to the output wave file
-void WFWriteSample(BYTE in_sample)
+void WFWriteSample(INT32 in_sample)
 {
 	if(l_output_wav_file == NULL)
 		return;
 
-	fwrite(&in_sample, sizeof(BYTE), 1, l_output_wav_file );
+	switch(l_output_wav_file_format_chunk.BitsPerSample)
+	{
+		case 8:
+			fwrite(&in_sample, sizeof(BYTE), 1, l_output_wav_file );
+			break;
+
+		case 16:
+			fwrite(&in_sample, sizeof(INT16), 1, l_output_wav_file);
+	}
+
 	l_output_wav_file_sample_count++;
 }
 
@@ -260,7 +269,7 @@ void WFCloseOutput(bool in_force_close)
 	fseek( l_output_wav_file, pos, SEEK_SET );
 
 	chunk_header.ChunkID = CHUNK_ID_DATA;
-	chunk_header.ChunkSize = l_output_wav_file_sample_count;
+	chunk_header.ChunkSize = l_output_wav_file_sample_count * l_output_wav_file_format_chunk.BitsPerSample / 8;
 
 	fwrite( &chunk_header, sizeof(chunk_header), 1, l_output_wav_file );
 

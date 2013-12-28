@@ -13,7 +13,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Includes
-#include "Types.h"
+#include <Types.h>
 #include "Main.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -25,5 +25,11 @@ void WDCloseInput(void);
 bool WDOpenOutput(wchar_t* in_file_name);
 bool WDWriteSample(BYTE in_sample);
 void WDCloseOutput(bool in_force_close);
+
+///////////////////////////////////////////////////////////////////////////////
+// Global variables
+extern int g_wavein_peak_level;
+extern bool g_wavein_peak_updated;
+extern bool g_cpu_overload;
 
 #endif

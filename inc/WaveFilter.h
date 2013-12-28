@@ -18,6 +18,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 INT32 WFProcessSample(INT32 in_new_sample);
-
+extern BYTE g_filter_type;
 
 #endif

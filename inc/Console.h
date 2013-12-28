@@ -12,7 +12,6 @@
 #ifndef __Console_h
 #define __Console_h
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Includes
 #include <Windows.h>
@@ -24,17 +23,17 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
-
-
+#include "Types.h"
+ 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 void ConsoleInit(void);
 void DisplayError(const wchar_t* format, ...);
 void DisplayMessage(const wchar_t* format, ...);
+void DisplaySignalLevel(INT32 in_peak_level, bool in_cpu_overload, const wchar_t* in_format, ...);
 void DisplayMessageAndClearToLineEnd(const wchar_t* format, ...);
 void PrintLogo(void);
 void DisplayProgressBar(wchar_t* in_title, int in_value, int in_max_value);
 void PrintHelp(void);
-
 
 #endif

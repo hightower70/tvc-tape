@@ -16,6 +16,7 @@
 #include "DDS.h"
 #include "CRC.h"
 #include "TAPEFile.h"
+#include "WaveDevice.h"
 #include "CASFile.h"
 #include "WaveMapper.h"
 #include "WaveFile.h"
@@ -146,7 +147,7 @@ void TAPEInit(void)
 	// open 
 	if(g_output_wave_file[0] != '0')
 	{
-		WFOpenOutput(g_output_wave_file);
+		WFOpenOutput(g_output_wave_file, 16);
 	}
 }
 
@@ -165,14 +166,11 @@ bool TAPELoad(void)
 	 
 		if(success)
 		{
-			if(!g_skip_digital_filter)
-			{
-				sample = WFProcessSample(sample);
-			}
+			sample = WFProcessSample(sample);
 			sample = WLCProcessSample(sample);
 			tape_file_loaded = DecodeSample(sample);
 
-			WFWriteSample((BYTE)(sample + BYTE_SAMPLE_ZERO_VALUE));
+			WFWriteSample(sample);
 
 			if(tape_file_loaded)
 				DisplayMessage(L"\r");
@@ -515,6 +513,26 @@ static void DisplayInputDataProgress(void)
 				}
 			}
 			break;
+
+		case FT_WaveInOut:
+			{
+				if(g_wavein_peak_updated)
+				{
+					if(l_header_block_valid)
+					{
+						TVCStringToUNICODEString(buffer, g_db_file_name);
+						DisplaySignalLevel(g_wavein_peak_level, g_cpu_overload, L" Loading: %s", buffer);
+					}
+					else
+					{
+						DisplaySignalLevel(g_wavein_peak_level, g_cpu_overload, L"");
+					}
+
+					g_wavein_peak_updated = false;
+					g_cpu_overload = false;
+				}
+			}
+			break;
 	}
 }
 
@@ -524,6 +542,8 @@ void DecoderRestart(void)
 {
 	l_decoder_state = DST_Idle;
 	WLCSetMode(WLCMT_NoiseKiller);
+	if(l_tape_reader_status == TRST_Data)
+		l_header_block_valid = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

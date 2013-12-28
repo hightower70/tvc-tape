@@ -90,7 +90,7 @@ bool WMOpenOutput(wchar_t* in_file_name)
 
 		// create wave file
 		case FT_WAV:
-			return WFOpenOutput(in_file_name);
+			return WFOpenOutput(in_file_name, 8);
 
 		default:
 			return false;

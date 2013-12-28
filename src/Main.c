@@ -30,6 +30,8 @@
 #include "DataBuffer.h"
 #include "FileUtils.h"
 #include "Console.h"
+#include "WaveFilter.h"
+#include "WaveLevelControl.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Types
@@ -38,6 +40,8 @@
 // Local function prototypes
 static void CloseInputFileList(void);
 static bool ParseWaveGenerationParameters(wchar_t* in_param);
+static bool ParseWavePreprocessingParameters(wchar_t* in_param);
+static bool ProcessCommandLine(int argc, wchar_t **argv);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -54,7 +58,6 @@ int g_forced_autostart = AUTOSTART_NOT_FORCED;
 int g_forced_copyprotect = COPYPROTECT_NOT_FORCED;
 bool g_overwrite_output_file = false;
 bool g_strict_format_disabled = false;
-bool g_skip_digital_filter = false;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
@@ -65,7 +68,6 @@ static FILE* l_input_file_name_list = NULL;
 // Main function
 int wmain( int argc, wchar_t **argv )
 {
-	int i;
 	wchar_t input_file_name[MAX_PATH_LENGTH+1];
 	wchar_t output_file_name[MAX_PATH_LENGTH+1];
 	bool success = true;
@@ -83,172 +85,10 @@ int wmain( int argc, wchar_t **argv )
 	// Start processing
 	PrintLogo();
 
-	//////////////////////
-	// Parse command line
-	i = 1;
-	while(i < argc && success) 
-	{
-		// switch found
-		if(argv[i][0] == '-') 
-		{
-			switch (tolower(argv[i][1])) 
-			{
-				case 'h':
-					PrintHelp();
-					return 0;
-
-				case 'q':
-					g_output_message = false;
-					break;
-
-				case 'a':
-					if( i + 1 < argc )
-					{
-						i++;
-						if( argv[i][0] == '0' )
-							g_forced_autostart = AUTOSTART_FORCED_TO_FALSE;
-						else
-							g_forced_autostart = AUTOSTART_FORCED_TO_TRUE;
-					}
-					else
-					{
-						success = false;
-					}	
-					break;
-
-				case 'c':
-					if( i + 1 < argc )
-					{
-						i++;
-						if( argv[i][0] == '0' )
-							g_forced_copyprotect = COPYPROTECT_FORCED_TO_FALSE;
-						else
-							g_forced_autostart = COPYPROTECT_FORCED_TO_TRUE;
-					}
-					else
-					{
-						success = false;
-					}	
-					break;
-
-				case 'o':
-					g_overwrite_output_file = true;
-					break;
-
-				case 'w':
-					if( i + 1 < argc )
-					{
-						i++;
-						wcscpy(g_output_wave_file, argv[i]);
-					}
-					else
-					{
-						success = false;
-					}	
-					break;
-
-				case 'd':
-					g_strict_format_disabled = true;
-					break;
-
-				case 'p':
-					g_skip_digital_filter = true;
-					break;
-
-				case 'g':
-					if( i + 1 < argc )
-					{
-						i++;
-						success = ParseWaveGenerationParameters(argv[i]);
-					}
-					else
-					{
-						success = false;
-					}	
-					break;
-
-				case 'n':
-					if( i + 1 < argc )
-					{
-						i++;
-						wcscpy(g_forced_tape_file_name, argv[i]);
-					}
-					else
-					{
-						success = false;
-					}	
-					break;
-
-				case 's':
-					if( i + 1 < argc )
-					{
-						i++;
-						l_output_file_name_list = _wfopen(argv[i], L"wt");
-						if(l_output_file_name_list == NULL)
-							success = false;
-					}
-					else
-					{
-						success = false;
-					}	
-					break;
-
-				case 'l':
-					if( i + 1 < argc )
-					{
-						i++;
-						l_input_file_name_list = _wfopen(argv[i], L"rt");
-						if(l_input_file_name_list == NULL)
-							success = false;
-					}
-					else
-					{
-						success = false;
-					}	
-					break;
-
-				default:
-					DisplayError(L"Error: Unknown flag: -%c\n", argv[i][1]);
-					return 1;
-			}
-
-			// display error
-			if(!success)
-			{
-				DisplayError(L"Error: Invalid flag: -%c\n", argv[i][1]);
-				return 1;
-			}
-		} 
-		else 
-		{
-			// file_name found
-			if( g_input_file_name[0] == '\0' )
-			{
-				wcscpy(g_input_file_name, argv[i]);
-			}
-			else
-			{
-				if( g_output_file_name[0] == '\0' )
-				{
-					wcscpy(g_output_file_name, argv[i]);
-				}
-				else
-				{
-					DisplayError(L"Error: Too many file name specified: %s.\n", argv[i]);
-					return 1;
-				}
-			}
-		}
-
-		if(success)
-			i++;
-	}
-
-	// Display error
+	// parse command line
+	success = ProcessCommandLine(argc, argv);
 	if(!success)
-	{
-		DisplayError(L"Error: Invalid flag -%c.\n", argv[i][1]);
-	}
+		return 1;
 
 	// check input file
 	if(success)
@@ -349,9 +189,14 @@ int wmain( int argc, wchar_t **argv )
 		{
 			// determine output file type from file name
 			g_output_file_type = DetermineFileType(g_output_file_name);
+
+			// if wildcard used for filename then use only extension as a filetype
+			if(g_output_file_name[0] == '*')
+				g_output_file_name[0] = '\0';
+
 		}
 
-		// wchar_t file type
+		// check output file type
 		if(g_output_file_type == FT_Unknown)
 		{
 			DisplayError(L"Error: Invalid output file type: %s.\n", g_output_file_name);
@@ -402,6 +247,12 @@ int wmain( int argc, wchar_t **argv )
 			case FT_BIN:
 				DisplayMessage(L"Loading BIN file:%s\n",g_input_file_name);
 				success = BINLoad(g_input_file_name);
+				break;
+
+			case FT_WaveInOut:
+				DisplayMessage(L"Processing audio input. Press <ESC> to stop.\n");
+				success = WMOpenInput(g_input_file_name);
+				TAPEInit();
 				break;
 		}
 
@@ -497,7 +348,7 @@ int wmain( int argc, wchar_t **argv )
 
 					default:
 						// handle dynamic output
-
+																			//TODO
 						// determine output file type
 						if(g_output_file_type == FT_Dynamic)
 						{	
@@ -682,4 +533,221 @@ static bool ParseWaveGenerationParameters(wchar_t* in_param)
   }
 
 	return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Parses wave preprocessing parameters
+static bool ParseWavePreprocessingParameters(wchar_t* in_param)
+{
+	wchar_t* token;
+	int index;
+	int value;
+
+	token = wcstok( in_param, L"," ); 
+
+	index = 0;
+	while( token != NULL && index < 3 )
+  {												
+		value = _wtoi(token);
+
+		switch (index)
+		{
+			case 0:
+				g_filter_type = (BYTE)value;
+				break;
+
+			case 1:
+				g_wave_level_control_mode = value;
+				break;
+		}
+
+    // Get next token: 
+		token = wcstok( NULL, L"," );
+		index++;
+  }
+
+	return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Processes commands line
+static bool ProcessCommandLine(int argc, wchar_t **argv)
+{
+	int i;
+	bool success = true;
+
+	i = 1;
+	while(i < argc && success) 
+	{
+		// switch found
+		if(argv[i][0] == '-') 
+		{
+			switch (tolower(argv[i][1])) 
+			{
+				case 'h':
+					PrintHelp();
+					return 0;
+
+				case 'q':
+					g_output_message = false;
+					break;
+
+				case 'a':
+					if( i + 1 < argc )
+					{
+						i++;
+						if( argv[i][0] == '0' )
+							g_forced_autostart = AUTOSTART_FORCED_TO_FALSE;
+						else
+							g_forced_autostart = AUTOSTART_FORCED_TO_TRUE;
+					}
+					else
+					{
+						success = false;
+					}	
+					break;
+
+				case 'c':
+					if( i + 1 < argc )
+					{
+						i++;
+						if( argv[i][0] == '0' )
+							g_forced_copyprotect = COPYPROTECT_FORCED_TO_FALSE;
+						else
+							g_forced_autostart = COPYPROTECT_FORCED_TO_TRUE;
+					}
+					else
+					{
+						success = false;
+					}	
+					break;
+
+				case 'o':
+					g_overwrite_output_file = true;
+					break;
+
+				case 'w':
+					if( i + 1 < argc )
+					{
+						i++;
+						wcscpy(g_output_wave_file, argv[i]);
+					}
+					else
+					{
+						success = false;
+					}	
+					break;
+
+				case 'd':
+					g_strict_format_disabled = true;
+					break;
+
+				case 'p':
+					if( i + 1 < argc )
+					{
+						i++;
+						success = ParseWavePreprocessingParameters(argv[i]);
+					}
+					else
+					{
+						success = false;
+					}	
+					break;
+
+				case 'g':
+					if( i + 1 < argc )
+					{
+						i++;
+						success = ParseWaveGenerationParameters(argv[i]);
+					}
+					else
+					{
+						success = false;
+					}	
+					break;
+
+				case 'n':
+					if( i + 1 < argc )
+					{
+						i++;
+						wcscpy(g_forced_tape_file_name, argv[i]);
+					}
+					else
+					{
+						success = false;
+					}	
+					break;
+
+				case 's':
+					if( i + 1 < argc )
+					{
+						i++;
+						l_output_file_name_list = _wfopen(argv[i], L"wt");
+						if(l_output_file_name_list == NULL)
+							success = false;
+					}
+					else
+					{
+						success = false;
+					}	
+					break;
+
+				case 'l':
+					if( i + 1 < argc )
+					{
+						i++;
+						l_input_file_name_list = _wfopen(argv[i], L"rt");
+						if(l_input_file_name_list == NULL)
+							success = false;
+					}
+					else
+					{
+						success = false;
+					}	
+					break;
+
+				default:
+					DisplayError(L"Error: Unknown flag: -%c\n", argv[i][1]);
+					return 1;
+			}
+
+			// display error
+			if(!success)
+			{
+				DisplayError(L"Error: Invalid flag: -%c\n", argv[i][1]);
+				return 1;
+			}
+		} 
+		else 
+		{
+			// file_name found
+			if( g_input_file_name[0] == '\0' )
+			{
+				wcscpy(g_input_file_name, argv[i]);
+			}
+			else
+			{
+				if( g_output_file_name[0] == '\0' )
+				{
+					wcscpy(g_output_file_name, argv[i]);
+				}
+				else
+				{
+					DisplayError(L"Error: Too many file name specified: %s.\n", argv[i]);
+					return 1;
+				}
+			}
+		}
+
+		if(success)
+			i++;
+	}
+
+	// Display error
+	if(!success)
+	{
+		DisplayError(L"Error: Invalid flag -%c.\n", argv[i][1]);
+	}
+
+	return success;
 }
