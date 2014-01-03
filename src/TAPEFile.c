@@ -257,8 +257,8 @@ bool TAPESave(wchar_t* in_file_name)
 	}
 
 	// write sector end
-	tape_sector_end.EOFFlag = TAPE_SECTOR_EOF;
-	CRCAddByte(0);
+	tape_sector_end.EOFFlag = TAPE_SECTOR_NOT_EOF;
+	CRCAddByte(tape_sector_end.EOFFlag);
 
 	tape_sector_end.CRC = CRCGet();
 

@@ -133,7 +133,7 @@ bool WDOpenInput(wchar_t* in_file_name)
 // Reads sample
 bool WDReadSample(INT32* out_sample)
 {
-	wchar_t buffer[100];
+//	wchar_t buffer[100];
 	int peak_value;
 	int finished_buffer_count;
 	int i;
@@ -180,12 +180,12 @@ bool WDReadSample(INT32* out_sample)
 			else
 				return false;
 
-			if((l_wavein_buffer[l_wavein_buffer_index].Header.dwFlags & WHDR_DONE) == 0)
-				return  false;
+			//if((l_wavein_buffer[l_wavein_buffer_index].Header.dwFlags & WHDR_DONE) == 0)
+			//	return  false;
 		}
 
-		wsprintf(buffer, L"%d, ", l_wavein_buffer_index);
-		OutputDebugString(buffer);
+		//wsprintf(buffer, L"%d, ", l_wavein_buffer_index);
+		//OutputDebugString(buffer);
 
 		// calculate peak level
 		peak_value = 0;

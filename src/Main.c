@@ -57,7 +57,6 @@ wchar_t g_forced_tape_file_name[MAX_PATH_LENGTH];
 int g_forced_autostart = AUTOSTART_NOT_FORCED;
 int g_forced_copyprotect = COPYPROTECT_NOT_FORCED;
 bool g_overwrite_output_file = false;
-bool g_strict_format_disabled = false;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
@@ -75,6 +74,7 @@ int wmain( int argc, wchar_t **argv )
 
 	// initialize
 	ConsoleInit();
+	BASInit();
 	g_output_wave_file[0] = '\0';
 	g_input_file_name[0] = '\0';
 	g_output_file_name[0] = '\0';
@@ -226,6 +226,8 @@ int wmain( int argc, wchar_t **argv )
 				break;
 
 			case FT_BAS:
+				DisplayMessage(L"Loading BAS file:%s\n",g_input_file_name);
+				success = BASLoad(g_input_file_name);
 				break;
 
 			case FT_WAV:
@@ -638,8 +640,33 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 					}	
 					break;
 
-				case 'd':
-					g_strict_format_disabled = true;
+				case 'b':
+					if( i + 1 < argc )
+					{
+						i++;
+						switch (tolower(argv[i][0]))
+						{
+							case 'a':
+								g_bas_encoding = TET_ANSI;
+								break;
+
+							case '8':
+								g_bas_encoding = TET_UTF8;
+								break;
+
+							case 'u':
+								g_bas_encoding = TET_UNICODE;
+								break;
+
+							default:
+								success = false;
+								break;
+						}
+					}
+					else
+					{
+						success = false;
+					}	
 					break;
 
 				case 'p':

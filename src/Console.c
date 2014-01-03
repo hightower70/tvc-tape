@@ -100,7 +100,7 @@ void DisplayMessageAndClearToLineEnd(const wchar_t* format, ...)
 void PrintLogo(void)
 {
 	if(g_output_message)
-		fwprintf(stderr, L"TVCTape v0.9 (c)2013 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
+		fwprintf(stderr, L"TVCTape v0.1 (c)2013-2014 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -197,10 +197,10 @@ void DisplaySignalLevel(INT32 in_peak_level, bool in_cpu_overload, const wchar_t
 	SetConsoleTextAttribute(l_console_handle, FOREGROUND_RED | FOREGROUND_INTENSITY);
 
 	if(in_cpu_overload)
-		fputwc('!', stdout);
+		fwprintf(stdout, L"CPU ");
 	else
-		fputwc(' ', stdout);
-	pos++;
+		fwprintf(stdout, L"    ");
+	pos += 4;
 
 	// restore original color
 	SetConsoleTextAttribute(l_console_handle, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
@@ -239,23 +239,24 @@ void PrintHelp(void)
 			L"  -c           overrides copyprotect settings\n"
 			L"               (0 - no copyprotect, 1 - copyprotected)\n"
 			L"  -o           overwrite output file\n"
-			L"  -d           disable strict format checking of tape format\n"
+			L"  -b e         BAS file character encoding (default: BAS write=UTF8, BAS read=autodetect)\n"
+			L"     e - encoding type (a - ANSII, u - UNICODE, 8 - UTF8)\n"
 			L"  -n filename  forces tape file name (stored in tape files)\n"
 			L"  -s filename  saves list of file name of the created output files\n"
 			L"  -l filename  load input file names from a text file instead of using \n"
 			L"               command line parameter\n"
-			L"  -p f,l       digital preprocessing parameters\n"
+			L"  -p f,l       digital preprocessing parameters (default = 1,1)\n"
 			L"     f - digital filter type (0 - no filter, 1 - fast, 2 - strong)\n"
 			L"     l - digital level control mode (0 - off, 1 - on)\n"
-			L"  -g f,g,l     changes wave generation parameters\n"
-			L"     f - frequency offset in percentage (default is 0%%)\n"
-			L"     g - length of the gap in ms between header and data blocks (default is 1000ms)\n"
-			L"     l - length of the block leading signal in ms (default is 4812ms)\n"
+			L"  -g f,g,l     changes wave generation parameters (default = 0,1000,4812; fast=50,200,500)\n"
+			L"     f - frequency offset in percentage\n"
+			L"     g - length of the gap in ms between header and data blocks\n"
+			L"     l - length of the block leading signal in ms\n"
 			L"  -w filename  stores preprocessed wave data into the specified wav file\n"
 			L"\n"
 			L"	- 'file1' and 'file2' can be 'CAS', 'BAS', 'TTP', 'BIN', 'HEX' (Intel), 'WAV' (PCM) or 'WAVE:' (wave in/out device).\n"
 			L" If two files are specified then it converts from file1->file2.\n"
-			L" If only one file is specified, it depends on the specified file type:\n"
+			L" If only one file is specified, operation depends on the specified file type:\n"
 			L"  CAS: Converts to WAV with the same name\n"
 			L"  WAV: Converts to one or more CAS files\n"
 			L"  BAS: Converts to CAS file with the same name\n"
