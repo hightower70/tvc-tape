@@ -57,6 +57,7 @@ wchar_t g_forced_tape_file_name[MAX_PATH_LENGTH];
 int g_forced_autostart = AUTOSTART_NOT_FORCED;
 int g_forced_copyprotect = COPYPROTECT_NOT_FORCED;
 bool g_overwrite_output_file = false;
+bool g_stop_after_one_file = false;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
@@ -232,6 +233,11 @@ int wmain( int argc, wchar_t **argv )
 
 			case FT_WAV:
 				DisplayMessage(L"Opening WAV file:%s\n",g_input_file_name);
+
+				// set filter
+				if(g_filter_type == FT_Auto)
+					g_filter_type = FT_Strong;
+
 				success = WMOpenInput(g_input_file_name);
 				TAPEInit();
 				break;
@@ -253,6 +259,10 @@ int wmain( int argc, wchar_t **argv )
 
 			case FT_WaveInOut:
 				DisplayMessage(L"Processing audio input. Press <ESC> to stop.\n");
+				// set filter
+				if(g_filter_type == FT_Auto)
+					g_filter_type = FT_Fast;
+
 				success = WMOpenInput(g_input_file_name);
 				TAPEInit();
 				break;
@@ -443,7 +453,7 @@ int wmain( int argc, wchar_t **argv )
 				}
 				DisplayMessage(L"\n");
 			}
-		}	while(success && (g_input_file_type == FT_WAV || g_input_file_type == FT_WaveInOut || g_input_file_type == FT_TTP));
+		}	while(success && (g_input_file_type == FT_TTP || ((g_input_file_type == FT_WAV || g_input_file_type == FT_WaveInOut) && !g_stop_after_one_file)));
 	}	while(l_input_file_name_list != NULL && !feof(l_input_file_name_list));
 
 	// close list file
@@ -691,6 +701,10 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 					{
 						success = false;
 					}	
+					break;
+
+				case '1':
+					g_stop_after_one_file = true;
 					break;
 
 				case 'n':

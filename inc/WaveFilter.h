@@ -16,8 +16,18 @@
 #include <Types.h>
 
 ///////////////////////////////////////////////////////////////////////////////
+// Types
+typedef enum
+{
+	FT_Auto,
+	FT_Fast,
+	FT_Strong,
+	FT_NoFilter
+} FilterTypes;
+
+///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 INT32 WFProcessSample(INT32 in_new_sample);
-extern BYTE g_filter_type;
+extern FilterTypes g_filter_type;
 
 #endif

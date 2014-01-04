@@ -29,3 +29,16 @@ bool g_db_autostart = false;									// Autostart flag
 char g_db_file_name[DB_MAX_FILENAME_LENGTH+1];						// Stored file name (if exists)
 BYTE g_db_program_type = DB_UPMPROGTYPE_PRG;	// Program type (Used by UPM header)
 bool g_db_crc_error_detected = false;					// True if buffer content was loaded with CRC error
+
+///////////////////////////////////////////////////////////////////////////////
+// Initialize data buffer
+void InitDataBuffer(void)
+{
+	g_db_buffer_length = 0;
+	g_db_buffer_index = 0;
+	g_db_copy_protect = false;	
+	g_db_autostart = false;
+	g_db_file_name[0] = '\0';
+	g_db_program_type = DB_UPMPROGTYPE_PRG;
+	g_db_crc_error_detected = false;
+}

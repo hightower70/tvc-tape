@@ -20,7 +20,7 @@ INT32 FilterFast(INT32 in_new_sample);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
-BYTE g_filter_type = 1;
+FilterTypes g_filter_type = FT_Auto;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Filters sample
@@ -28,10 +28,10 @@ INT32 WFProcessSample(INT32 in_new_sample)
 {
 	switch(g_filter_type)
 	{
-		case 1:
+		case FT_Fast:
 			return FilterFast(in_new_sample);
 
-		case 2:
+		case FT_Strong:
 			return FilterStrong(in_new_sample);
 
 		default:

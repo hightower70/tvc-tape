@@ -177,9 +177,7 @@ bool BASLoad(wchar_t* in_file_name)
 	}
 
 	// init
-	g_db_buffer_length = 0;
-	g_db_autostart = false;
-	g_db_copy_protect = false;
+	InitDataBuffer();
 
 	// parse file
 	l_basic_line_parser_state = ST_TOKENIZING;
