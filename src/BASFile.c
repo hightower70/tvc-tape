@@ -40,6 +40,7 @@
 #define ST_QUOTATION			1 // within quotation marks
 #define ST_DATA						2 // inside DATA
 #define ST_REMARK					4 // inside remark line
+#define ST_NON_BASIC			8 // non-basic (binary) part of the file
 
 //////////////////////////////////////////////////////////////////////////////
 // Types
@@ -62,9 +63,9 @@ typedef struct
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-static bool ParseLine(TextEncodingType in_encoding);
+static bool ParseLine(void);
 static BYTE HexDigitToNumber(char in_digit);
-static BYTE AnsiToHex(int in_pos, bool* in_success);
+static BYTE UnicodeToHex(int in_pos, bool* in_success);
 static int TokenLengthCompare(const void* a, const void* b);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -75,9 +76,10 @@ extern const char* l_tokenized_ansi_char_map[256];
 static char l_ansi_line_buffer[LINE_BUFFER_LENGTH];
 static wchar_t l_unicode_line_buffer[LINE_BUFFER_LENGTH];
 
-static TokenLength l_token_length[256];
+static TokenLength l_token_length[128];
 
 static int l_line_number;
+static int l_basic_line_parser_state;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -89,10 +91,10 @@ void BASInit(void)
 {
 	int i;
 
-	for(i=0; i<256; i++)
+	for(i=0; i<128; i++)
 	{
-		l_token_length[i].Index = i;
-		l_token_length[i].Length = strlen(l_tokenized_ansi_char_map[i]);
+		l_token_length[i].Index = i+128;
+		l_token_length[i].Length = strlen(l_tokenized_ansi_char_map[l_token_length[i].Index]);
 	}
 
 	qsort(l_token_length, 256, sizeof(TokenLength), TokenLengthCompare);
@@ -114,6 +116,7 @@ bool BASLoad(wchar_t* in_file_name)
 	TextEncodingType encoding = g_bas_encoding;
 	DWORD bom;
 	bool success = true;
+	int i;
 
 	// determine encoding in the case auto mode
 	if(encoding == TET_Auto)
@@ -179,12 +182,23 @@ bool BASLoad(wchar_t* in_file_name)
 	g_db_copy_protect = false;
 
 	// parse file
+	l_basic_line_parser_state = ST_TOKENIZING;
 	if(encoding == TET_ANSI)
 	{
 		l_line_number = 0;
 		while(success && fgets(l_ansi_line_buffer, LINE_BUFFER_LENGTH, bas_file) != NULL)
 		{
-			success = ParseLine(encoding);
+			// convert line to UNICODE
+			i = 0;
+			while(i < LINE_BUFFER_LENGTH-1 && l_ansi_line_buffer[i] != '\0')
+			{
+				l_unicode_line_buffer[i] = ANSICharToUNICODEChar(l_ansi_line_buffer[i]);
+				i++;
+			}
+			l_unicode_line_buffer[i] = '\0';
+
+			// parse line
+			success = ParseLine();
 			l_line_number++;
 		}
 	}
@@ -193,14 +207,17 @@ bool BASLoad(wchar_t* in_file_name)
 		l_line_number = 0;
 		while(success && fgetws(l_unicode_line_buffer, LINE_BUFFER_LENGTH, bas_file) != NULL)
 		{
-			success = ParseLine(encoding);
+			// parse line
+			success = ParseLine();
 			l_line_number++;
 		}
 	}
 
-	// add program terminator
-	if(success)
+	// terminate basic program
+	if(success && l_basic_line_parser_state == ST_TOKENIZING)
+	{
 		g_db_buffer[g_db_buffer_length++] = BAS_PRGEND;
+	}
 
 	// display error
 	if(!success)
@@ -215,116 +232,57 @@ bool BASLoad(wchar_t* in_file_name)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Parse basic line
-static bool ParseLine(TextEncodingType in_encoding)
+static bool ParseLine(void)
 {
 	WORD line_number;
 	int buffer_index;
 	int line_start_index;
 	int token_index;
-	int pos;
-	char ach;
 	wchar_t uch;
 	bool success = true;
-	int state;
 	BYTE current_token;
 	int token_pos;
-	bool token_found;
 	int i;
-
+	bool store_character;
 
 	// init
 	line_start_index = g_db_buffer_length;
 
 	// remove line end characters
 	buffer_index = 0;
-	if(in_encoding == TET_ANSI)
+	l_unicode_line_buffer[LINE_BUFFER_LENGTH-1] = '\0';
+	while(l_unicode_line_buffer[buffer_index] != '\0')
 	{
-		l_ansi_line_buffer[LINE_BUFFER_LENGTH-1] = '\0';
-		while(l_ansi_line_buffer[buffer_index] != '\0')
+		uch = l_unicode_line_buffer[buffer_index];
+		if(uch == '\n' ||	uch == '\r')
 		{
-			ach = l_ansi_line_buffer[buffer_index];
-			if(ach == '\n' ||	ach == '\r')
-			{
-				l_ansi_line_buffer[buffer_index] = '\0';
-				break;
-			}
-			buffer_index++;
+			l_unicode_line_buffer[buffer_index] = '\0';
+			break;
 		}
-	}
-	else
-	{
-		l_unicode_line_buffer[LINE_BUFFER_LENGTH-1] = '\0';
-		while(l_unicode_line_buffer[buffer_index] != '\0')
-		{
-			uch = l_unicode_line_buffer[buffer_index];
-			if(uch == '\n' ||	uch == '\r')
-			{
-				l_unicode_line_buffer[buffer_index] = '\0';
-				break;
-			}
-			buffer_index++;
-		}
+		buffer_index++;
 	}
 
 	// skip whitespaces at line start
 	buffer_index = 0;
 	while(buffer_index < LINE_BUFFER_LENGTH)
 	{
-		if(in_encoding == TET_ANSI)
-		{
-			ach = l_ansi_line_buffer[buffer_index];
-			// check for empty line
-			if(ach == '\0')
-				return success;
+		uch = l_unicode_line_buffer[buffer_index];
 
-			// check for non-whitespace
-			if(isalnum(ach))
-				break;
-		}
-		else
-		{
-			uch = l_unicode_line_buffer[buffer_index];
-			// check for empty line
-			if(uch == '\0')
-				return success;
+		// check for empty line
+		if(uch == '\0')
+			return success;
 
-			// check for non-whitespace
-			if(iswalnum(uch))
-				break;
-		}
+		// check for non-whitespace
+		if(iswalnum(uch))
+			break;
 
 		buffer_index++;
 	}
 
-	// parse linenumber or non-basic lines
-	if(in_encoding == TET_ANSI)
+	// parse basic lines
+	if(l_basic_line_parser_state == ST_TOKENIZING)
 	{
-		ach = l_ansi_line_buffer[buffer_index];
-		if(isdigit(ach))
-		{
-			// convert to line number
-			line_number = 0;
-			while(success && isdigit(ach))
-			{
-				line_number = line_number * 10 + (ach - '0');
-				if(line_number > 65535)
-					success = false;
-				ach = l_ansi_line_buffer[++buffer_index];
-			}
-
-			// skip whitespaces
-			while(ach == ' ' || ach == '\t')
-			{
-				ach = l_ansi_line_buffer[++buffer_index];
-			}
-		}
-		else
-		{
-
-		}
-	}
-	else
-	{
+		// parse linenumber
 		uch = l_unicode_line_buffer[buffer_index];
 		if(iswdigit(uch))
 		{
@@ -340,9 +298,7 @@ static bool ParseLine(TextEncodingType in_encoding)
 
 			// skip whitespaces
 			while(success && uch == ' ' || uch == '\t')
-			{
 				uch = l_unicode_line_buffer[++buffer_index];
-			}
 
 			// store line header
 			if(success)
@@ -352,7 +308,6 @@ static bool ParseLine(TextEncodingType in_encoding)
 			}
 
 			// tokenize line
-			state = ST_TOKENIZING;
 			while(success && l_unicode_line_buffer[buffer_index] != '\0')
 			{
 				// check for escape characters
@@ -369,7 +324,7 @@ static bool ParseLine(TextEncodingType in_encoding)
 						// store character defined by hex number
 						case 'X':
 						case 'x':
-							g_db_buffer[g_db_buffer_length++] = AnsiToHex(buffer_index, &success);
+							g_db_buffer[g_db_buffer_length++] = UnicodeToHex(buffer_index, &success);
 							buffer_index += 2;
 							break;
 
@@ -381,11 +336,11 @@ static bool ParseLine(TextEncodingType in_encoding)
 				else
 				{
 					// tokenize or store characters
-					if(state == ST_TOKENIZING)
+					store_character = true;
+					if(l_basic_line_parser_state == ST_TOKENIZING)
 					{
 						// tokenize
-						token_found = false;
-						for(i = 0; i < 256 && !token_found; i++)
+						for(i = 0; i < 128 && store_character; i++)
 						{
 							token_index = l_token_length[i].Index;
 							token_pos = 0;
@@ -398,21 +353,20 @@ static bool ParseLine(TextEncodingType in_encoding)
 								current_token = token_index;
 								g_db_buffer[g_db_buffer_length++] = token_index;
 								buffer_index += token_pos;
-								token_found = true;
+								store_character = false;
 							}
 						}
-
-						if(!token_found)
-							success = false;
 					}
-					else
+
+					// store character without tokenizing
+					if(store_character)
 					{
 						// store
 						uch = l_unicode_line_buffer[buffer_index++];
 						if(uch > 0x7f)
 						{
 							// check for hungarian characters
-							current_token = UNICODECharToTVCChar(uch);
+							current_token = (BYTE)UNICODECharToTVCChar(uch);
 							if(current_token != '\0')
 							{
 								g_db_buffer[g_db_buffer_length++] = (BYTE)current_token - 0x80;
@@ -435,27 +389,27 @@ static bool ParseLine(TextEncodingType in_encoding)
 					// update status
 					if(current_token == '"')
 					{
-						state ^= ST_QUOTATION;
+						l_basic_line_parser_state ^= ST_QUOTATION;
 					}
 					else
 					{
-						if((state & ST_QUOTATION)==0) 
+						if((l_basic_line_parser_state & ST_QUOTATION)==0) 
 						{
 							if(current_token == BAS_TOKEN_DATA)
 							{
-								state |= ST_DATA;
+								l_basic_line_parser_state |= ST_DATA;
 							}
 							else
 							{
 								if(current_token == BAS_TOKEN_COLON)
 								{
-									state &= ~ST_DATA;
+									l_basic_line_parser_state &= ~ST_DATA;
 								}
 								else
 								{
 									 if(current_token == BAS_TOKEN_COMMENT || current_token == BAS_TOKEN_REM)
 									 {
-										 state |= ST_REMARK;
+										 l_basic_line_parser_state |= ST_REMARK;
 									 }
 								}
 							}
@@ -475,30 +429,68 @@ static bool ParseLine(TextEncodingType in_encoding)
 				((BASLine*)&g_db_buffer[line_start_index])->LineLength = g_db_buffer_length - line_start_index;
 
 			// quotes should be in pair
-			if((state & ST_QUOTATION) != 0)
-				success = false;
-		}
-		else
-		{
-			if(wcsnicmp(&l_unicode_line_buffer[buffer_index], L"BYTESOFFSET", 11) == 0)
+			if((l_basic_line_parser_state & ST_QUOTATION) != 0 && (l_basic_line_parser_state & ST_REMARK) == 0)
 			{
+				success = false;
 			}
 			else
 			{
-				if(wcsnicmp(&l_unicode_line_buffer[buffer_index], L"AUTOSTART", 9) == 0)
-				{
-				}
-				else
-				{
-					if(wcsnicmp(&l_unicode_line_buffer[buffer_index], L"BYTES", 5) == 0)
-					{
-					}
-					else
-						success = false;
-				}
+				// reset state
+				l_basic_line_parser_state = ST_TOKENIZING;
 			}
 		}
+		else
+		{
+			// terminate basic program and switch to non basic part parsing
+			g_db_buffer[g_db_buffer_length++] = BAS_PRGEND;
+			l_basic_line_parser_state = ST_NON_BASIC;
+		}
 	}
+
+	// process non basic (binary part)
+	if(l_basic_line_parser_state == ST_NON_BASIC)
+	{
+		// bytesoffset command
+		if(_wcsnicmp(&l_unicode_line_buffer[buffer_index], L"BYTESOFFSET", 11) == 0)
+		{
+			// ignore this command
+		}
+		else
+		{
+			// autostart command
+			if(_wcsnicmp(&l_unicode_line_buffer[buffer_index], L"AUTOSTART", 9) == 0)
+			{
+				g_db_autostart = true;
+			}
+			else
+			{
+				// bytes command
+				if(_wcsnicmp(&l_unicode_line_buffer[buffer_index], L"BYTES", 5) == 0)
+				{
+					buffer_index += 5;
+
+					// skip whitespaces
+					while(success && l_unicode_line_buffer[buffer_index] == ' ' || l_unicode_line_buffer[buffer_index] == '\t')
+						buffer_index++;
+
+					// convert escape characters
+					while(success && l_unicode_line_buffer[buffer_index] != '\0')
+					{
+						if(l_unicode_line_buffer[buffer_index] == '\\' && towupper(l_unicode_line_buffer[buffer_index+1]) == 'X')
+						{
+							buffer_index += 2;
+							g_db_buffer[g_db_buffer_length++] = UnicodeToHex(buffer_index, &success);
+							buffer_index += 2;
+						}
+						else
+							success = false;
+					}
+				}
+				else
+					success = false;
+			}
+		}
+	}	 
 
 	return success;
 }
@@ -508,9 +500,9 @@ static bool ParseLine(TextEncodingType in_encoding)
 static BYTE HexDigitToNumber(char in_digit)
 {
 	if(in_digit >= '0' && in_digit <= '9')
-		return in_digit - '9';
+		return in_digit - '0';
 
-	if(in_digit >= 'a' && in_digit >= 'f')
+	if(in_digit >= 'a' && in_digit <= 'f')
 		return in_digit - 'a' + 10;
 
 	if(in_digit >= 'A' && in_digit <= 'F')
@@ -521,14 +513,14 @@ static BYTE HexDigitToNumber(char in_digit)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Converts Ansi hex characters to byte
-static BYTE AnsiToHex(int in_pos, bool* in_success)
+static BYTE UnicodeToHex(int in_pos, bool* in_success)
 {
 	if(!(*in_success))
 		return 0;
 
-	if(isxdigit(l_ansi_line_buffer[in_pos] && isxdigit(l_ansi_line_buffer[in_pos+1])))
+	if(isxdigit(l_unicode_line_buffer[in_pos]) && isxdigit(l_unicode_line_buffer[in_pos+1]))
 	{
-		return (HexDigitToNumber(l_ansi_line_buffer[in_pos]) << 4) + HexDigitToNumber(l_ansi_line_buffer[in_pos+1]);
+		return (HexDigitToNumber((char)l_unicode_line_buffer[in_pos]) << 4) + HexDigitToNumber((char)l_unicode_line_buffer[in_pos+1]);
 	}
 	else
 	{

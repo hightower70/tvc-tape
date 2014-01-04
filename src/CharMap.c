@@ -124,10 +124,9 @@ char UNICODECharToTVCChar(wchar_t in_char)
 
 	first = 0;
   last = CHARACTER_NUMBER - 1;
-  middle = (first+last)/2;
- 
   while( first <= last )
   {
+	  middle = (first+last)/2;
 		if( l_unicode_to_tvc[middle].UChar < in_char )
 			first = middle + 1;    
     else
@@ -140,9 +139,7 @@ char UNICODECharToTVCChar(wchar_t in_char)
 			{
 				last = middle - 1;
 			}
- 
-      middle = (first + last)/2;
-		}
+ 		}
   }
 
 	return '\0';
@@ -160,6 +157,33 @@ void UNICODEStringToTVCString(char* out_destination_ansi_string, wchar_t* in_sou
 	}
 
 	*out_destination_ansi_string = '\0';
+}
+
+/*****************************************************************************/
+/* ANSI-> UNICODE conversion                                                 */
+/*****************************************************************************/
+
+///////////////////////////////////////////////////////////////////////////////
+// Converts ANSII char to UNICODE char
+wchar_t ANSICharToUNICODEChar(char in_char)
+{
+	switch(in_char)
+	{
+		case '\xd5': // Õ
+			return L'\x0150';
+
+		case '\xf5': // õ
+			return L'\x0151';
+
+		case '\xdb': // Û
+			return L'\x0170';
+
+		case '\xfb': // û
+			return L'\x0171';
+
+		default:
+			return (wchar_t)(BYTE)in_char;
+	}
 }
 
 /*****************************************************************************/

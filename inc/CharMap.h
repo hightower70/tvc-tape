@@ -35,6 +35,7 @@ void UNICODEStringToTVCString(char* out_destination_ansi_string, wchar_t* in_sou
 
 void TVCToPCFilename(wchar_t* out_tvc_file_name, char* in_file_name);
 
+wchar_t ANSICharToUNICODEChar(char in_char);
 
 
 #endif
