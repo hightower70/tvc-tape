@@ -63,5 +63,7 @@ extern wchar_t g_forced_tape_file_name[MAX_PATH_LENGTH];
 extern int g_forced_autostart;
 extern bool g_output_message;
 extern bool g_overwrite_output_file;
+extern bool g_exclude_basic_program;
+extern WORD g_lomem_address;
 
 #endif

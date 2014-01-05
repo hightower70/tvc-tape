@@ -58,6 +58,8 @@ int g_forced_autostart = AUTOSTART_NOT_FORCED;
 int g_forced_copyprotect = COPYPROTECT_NOT_FORCED;
 bool g_overwrite_output_file = false;
 bool g_stop_after_one_file = false;
+bool g_exclude_basic_program = false;
+WORD g_lomem_address = 6639;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
@@ -638,6 +640,10 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 					g_overwrite_output_file = true;
 					break;
 
+				case 'e':
+					g_exclude_basic_program = true;
+					break;
+
 				case 'w':
 					if( i + 1 < argc )
 					{
@@ -712,6 +718,18 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 					{
 						i++;
 						wcscpy(g_forced_tape_file_name, argv[i]);
+					}
+					else
+					{
+						success = false;
+					}	
+					break;
+
+				case 'm':
+					if( i + 1 < argc )
+					{
+						i++;
+						g_lomem_address = _wtoi(argv[i]);
 					}
 					else
 					{

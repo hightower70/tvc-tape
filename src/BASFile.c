@@ -766,8 +766,35 @@ bool BASSave(wchar_t* in_file_name)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Token tables
+// Find end of the basic instuctions
+int BASFindEnd(void)
+{
+	int pos = 0;
+	bool basic_end_found = false;
 
+	while(pos < g_db_buffer_length && !basic_end_found)
+	{
+		// check current line length
+		if(g_db_buffer[pos] == BAS_PRGEND)
+		{
+			basic_end_found = true;
+			pos++;
+		}
+		else
+		{
+			// next line
+			pos += g_db_buffer[pos];
+		}
+	}
+
+	if(basic_end_found)
+		return pos;
+	else
+		return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Token tables
 static const char* l_tokenized_ansi_char_map[256] =
 {
 // 			0		    1		    2			  3		    4       5       6       7		    8			   9       a         b        c        d				e        f

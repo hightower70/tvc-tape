@@ -30,6 +30,8 @@ typedef enum
 void BASInit(void);
 bool BASLoad(wchar_t* in_file_name);
 bool BASSave(wchar_t* in_file_name);
+int BASFindEnd(void);
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables

@@ -422,7 +422,7 @@ static bool EncodeBlockLeading(void)
 
 	if(success)
 	{
-			success = GenerateDDSSignal(OffsetFrequency(FREQ_LEADING), period_count);
+		success = GenerateDDSSignal(OffsetFrequency(FREQ_LEADING), period_count);
 	}
 
 	if(success)
