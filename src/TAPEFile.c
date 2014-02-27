@@ -100,6 +100,7 @@ static TapeReaderStatusType l_tape_reader_status = TRST_Idle;
 static SignalPhaseType l_current_phase = SPT_Low;
 static SignalPhaseType l_phase_mode = SPT_Low;
 
+static INT32 l_previous_sample;
 static int l_period_high_length;
 static int l_period_low_length;
 static int l_sync_first_half_period_length;
@@ -143,6 +144,7 @@ void TAPEInit(void)
 	l_period_high_length = 0;
 	l_period_low_length = 0;
 	l_header_block_valid = false;
+	l_previous_sample = 0;
 
 	// open 
 	if(g_output_wave_file[0] != '0')
@@ -553,8 +555,9 @@ bool DecodeSample(INT32 in_sample)
 	DWORD period_length;
 	int high_period_length;
 	int low_period_length;
+	int oversampled_length;
 	SignalPhaseType current_phase;
-	bool half_period_end = false;
+	bool half_period_end;
 	bool buffer_valid = false;
 
 	// cache period length
@@ -562,26 +565,24 @@ bool DecodeSample(INT32 in_sample)
 	low_period_length = l_period_low_length;
 	current_phase = l_current_phase;
 
-	if(l_sample_index==497529)
-		period_length = 6;
-
-	if(in_sample != 0)
-		period_length = 5;
-
+	// detectg zero crossing (eof of the half periods)
+	half_period_end = false;
 	switch(current_phase)
 	{
 		// check for zero crossing in rising direction
 		case SPT_Low:
 			if(in_sample > 0)
 			{
-				l_current_phase = SPT_High;
+				oversampled_length = (OVERSAMPLING_RATE * l_previous_sample) / (l_previous_sample - in_sample);
+				l_period_low_length += oversampled_length;
 				period_length = l_period_high_length + l_period_low_length;
-				l_period_high_length = 1;
+				l_period_high_length = OVERSAMPLING_RATE - oversampled_length;
 				half_period_end = true;
+				l_current_phase = SPT_High;
 			}
 			else
 			{
-				l_period_low_length++;
+				l_period_low_length += OVERSAMPLING_RATE;
 			}
 			break;
 
@@ -589,17 +590,20 @@ bool DecodeSample(INT32 in_sample)
 		case SPT_High:
 			if(in_sample < 0)
 			{
-				l_current_phase = SPT_Low;
+				oversampled_length = (OVERSAMPLING_RATE * l_previous_sample) / (l_previous_sample - in_sample);
+				l_period_high_length += oversampled_length;
 				period_length = l_period_high_length + l_period_low_length;
-				l_period_low_length = 1;
+				l_period_low_length = OVERSAMPLING_RATE - oversampled_length;
 				half_period_end = true;
+				l_current_phase = SPT_Low;
 			}
 			else
 			{
-				l_period_high_length++;
+				l_period_high_length += OVERSAMPLING_RATE;
 			}
 			break;
 	}
+	l_previous_sample = in_sample;
 
 	// zero cross detected (half period end)
 	if(half_period_end)

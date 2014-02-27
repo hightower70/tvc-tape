@@ -88,6 +88,8 @@ bool WDOpenInput(wchar_t* in_file_name)
 
   // create event
 	l_wavein_event = CreateEvent( NULL, true, false, NULL); // create event for sync.
+	if(l_wavein_event == NULL)
+		return false;
 
   // prepare for opening
 	ZeroMemory( &wave_format, sizeof(wave_format) );
@@ -258,6 +260,9 @@ bool WDOpenOutput(wchar_t* in_file_name)
 
   // create event
 	l_waveout_event = CreateEvent( NULL, true, false, NULL); // create event for sync.
+	if(l_waveout_event == NULL)
+		return false;
+
 	ResetEvent(l_waveout_event);
 
   // prepare for opening

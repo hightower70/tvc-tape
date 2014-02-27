@@ -35,6 +35,8 @@
 
 #define MAX_BYTES_IN_A_LINE 16
 
+#define TOKEN_COUNT 128
+
 // status codes
 #define ST_TOKENIZING			0
 #define ST_QUOTATION			1 // within quotation marks
@@ -91,13 +93,13 @@ void BASInit(void)
 {
 	int i;
 
-	for(i=0; i<128; i++)
+	for(i=0; i<TOKEN_COUNT; i++)
 	{
 		l_token_length[i].Index = i+128;
 		l_token_length[i].Length = strlen(l_tokenized_ansi_char_map[l_token_length[i].Index]);
 	}
 
-	qsort(l_token_length, 256, sizeof(TokenLength), TokenLengthCompare);
+	qsort(l_token_length, TOKEN_COUNT, sizeof(TokenLength), TokenLengthCompare);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

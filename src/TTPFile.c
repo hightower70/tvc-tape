@@ -216,7 +216,7 @@ bool TTPSave(wchar_t* in_tape_file_name)
 
 	// header block sector start
 	sector_header.SectorNumber		= 0;
-	sector_header.BytesInSector	= (BYTE)(sizeof(BYTE) + tape_file_name_length + sizeof(cas_program_header));
+	sector_header.BytesInSector	= (BYTE)sizeof(BYTE) + tape_file_name_length + (BYTE)sizeof(cas_program_header);
 
 	CRCAddBlock(((BYTE*)&sector_header), sizeof(sector_header));
 	WriteBlock(l_ttp_output_file, &sector_header, sizeof(sector_header), &success);

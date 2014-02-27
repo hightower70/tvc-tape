@@ -91,9 +91,8 @@ bool HEXLoad(wchar_t* in_file_name)
 		{
 			// read record length
 			success = ReadHexDigits(hex_file, 2, &rec_len);
+			AddToChecksum(&checksum, (BYTE)rec_len);
 		}
-
-		AddToChecksum(&checksum, (BYTE)rec_len);
 
 		if(success)
 		{
@@ -108,9 +107,8 @@ bool HEXLoad(wchar_t* in_file_name)
 		{
 			// read record type
 			success = ReadHexDigits(hex_file, 2, &rec_type);
+			AddToChecksum(&checksum, (BYTE)rec_type);
 		}
-
-		AddToChecksum(&checksum, (BYTE)rec_type);
 
 		if(success)
 		{

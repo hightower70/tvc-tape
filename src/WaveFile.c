@@ -74,7 +74,7 @@ bool WFOpenInput(wchar_t* in_file_name)
 	}
 
 	// process chunks
-	while(!feof(l_input_wave_file) && success && !data_chunk_found)
+	while(success && !feof(l_input_wave_file) && !data_chunk_found)
 	{
 		// read chunk header
 		if( fread(&chunk_header, sizeof(chunk_header), 1, l_input_wave_file) == 1 )
