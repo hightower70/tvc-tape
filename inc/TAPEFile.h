@@ -14,14 +14,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Includes
 #include "Types.h"
+#include "Main.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
-#define FREQ_SYNC			1359
-#define FREQ_ZERO			1812
-#define FREQ_LEADING	2128
-#define FREQ_ONE			2577
-#define FREQ_MIDDLE		((FREQ_ZERO + FREQ_ONE) / 2)
+#define FREQ_SYNC			1359		// Sync frequency (Hz)
+#define FREQ_ZERO			1812		// Zero bit frequency
+#define FREQ_LEADING	2128		// Leading bit frequency
+#define FREQ_ONE			2577		// One bit frequency
+#define FREQ_MIDDLE		((FREQ_ZERO + FREQ_ONE) / 2) // Frequency used for zero-one bit detection
 
 #define OVERSAMPLING_RATE 100l
 
@@ -40,7 +41,7 @@
 #define TAPE_SECTOR_NOT_EOF						0x00
 
 #define LEADING_FREQUENCY_TOLERANCE 30		// leading frequency tolerance in percentage
-#define SYNC_FREQUENCY_TOLERANCE 10				// sync frequency tolerance in percentage
+#define SYNC_FREQUENCY_TOLERANCE 15				// sync frequency tolerance in percentage
 
 ///////////////////////////////////////////////////////////////////////////////
 // Types
@@ -76,19 +77,15 @@ typedef struct
 					 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-bool TAPESave(wchar_t* in_file_name);
-void TAPEInit(void);
-bool TAPELoad(void);
-void TAPEClose(void);
-
-/*
 bool TAPEOpenInput(wchar_t* in_file_name);
 bool TAPECreateOutput(wchar_t* in_file_name);
-bool TAPELoad(void);
-bool TAPESave(void);
-void TAPECloseInput(void);
+
+bool TAPESave(wchar_t* in_file_name);
+LoadStatus TAPELoad(void);
+
 void TAPECloseOutput(void);
-		*/
+void TAPECloseInput(void);
+
 void TAPEInitBlockHeader(TAPEBlockHeaderType* out_block_header);
 bool TAPEValidateBlockHeader(TAPEBlockHeaderType* in_block_header);
 

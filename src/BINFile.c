@@ -29,7 +29,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Loads BIN file
-bool BINLoad(wchar_t* in_file_name)
+LoadStatus BINLoad(wchar_t* in_file_name)
 {
 	FILE* bin_file;
 	size_t length;
@@ -40,13 +40,13 @@ bool BINLoad(wchar_t* in_file_name)
 	// open BIN file
 	bin_file = _wfopen(in_file_name, L"rb");
 	if(bin_file == NULL)
-		return false;
+		return LS_Fatal;
 
 	length = fread(g_db_buffer,  sizeof(BYTE), DB_MAX_DATA_LENGTH, bin_file);
 
 	g_db_buffer_length = (WORD)length;
 
-	return true;
+	return LS_Success;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -65,9 +65,9 @@ typedef struct
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-static bool ParseLine(void);
+static LoadStatus ParseLine(void);
+static BYTE UnicodeToHex(int in_pos, LoadStatus* in_load_status);
 static BYTE HexDigitToNumber(char in_digit);
-static BYTE UnicodeToHex(int in_pos, bool* in_success);
 static int TokenLengthCompare(const void* a, const void* b);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -111,13 +111,13 @@ static int TokenLengthCompare(const void* a, const void* b)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Loads BAS file
-bool BASLoad(wchar_t* in_file_name)
+LoadStatus BASLoad(wchar_t* in_file_name)
 {
 	FILE* bas_file;
 	wchar_t* open_options;
 	TextEncodingType encoding = g_bas_encoding;
 	DWORD bom;
-	bool success = true;
+	LoadStatus load_status = LS_Success;
 	int i;
 
 	// determine encoding in the case auto mode
@@ -128,7 +128,7 @@ bool BASLoad(wchar_t* in_file_name)
 		if(bas_file == NULL)
 		{
 			DisplayError(L"Can't open BAS file\n");
-			return false;
+			return LS_Fatal;
 		}
 
 		fread(l_ansi_line_buffer, 3, 1, bas_file);
@@ -167,7 +167,7 @@ bool BASLoad(wchar_t* in_file_name)
 			break;
 
 		default:
-			return false;
+			return LS_Fatal;
 	}
 
 	// parse BAS file
@@ -175,7 +175,7 @@ bool BASLoad(wchar_t* in_file_name)
 	if(bas_file == NULL)
 	{
 		DisplayError(L"Can't open BAS file\n");
-		return false;
+		return LS_Fatal;
 	}
 
 	// init
@@ -186,7 +186,7 @@ bool BASLoad(wchar_t* in_file_name)
 	if(encoding == TET_ANSI)
 	{
 		l_line_number = 0;
-		while(success && fgets(l_ansi_line_buffer, LINE_BUFFER_LENGTH, bas_file) != NULL)
+		while(load_status == LS_Success && fgets(l_ansi_line_buffer, LINE_BUFFER_LENGTH, bas_file) != NULL)
 		{
 			// convert line to UNICODE
 			i = 0;
@@ -198,48 +198,48 @@ bool BASLoad(wchar_t* in_file_name)
 			l_unicode_line_buffer[i] = '\0';
 
 			// parse line
-			success = ParseLine();
+			load_status = ParseLine();
 			l_line_number++;
 		}
 	}
 	else
 	{
 		l_line_number = 0;
-		while(success && fgetws(l_unicode_line_buffer, LINE_BUFFER_LENGTH, bas_file) != NULL)
+		while(load_status == LS_Success && fgetws(l_unicode_line_buffer, LINE_BUFFER_LENGTH, bas_file) != NULL)
 		{
 			// parse line
-			success = ParseLine();
+			load_status = ParseLine();
 			l_line_number++;
 		}
 	}
 
 	// terminate basic program
-	if(success && l_basic_line_parser_state == ST_TOKENIZING)
+	if(load_status == LS_Success && l_basic_line_parser_state == ST_TOKENIZING)
 	{
 		g_db_buffer[g_db_buffer_length++] = BAS_PRGEND;
 	}
 
 	// display error
-	if(!success)
+	if(load_status != LS_Success)
 	{
 		DisplayError(L"Syntax error at line: %d\n", l_line_number);
 	}
 
 	fclose(bas_file);
 
-	return success;
+	return load_status;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Parse basic line
-static bool ParseLine(void)
+static LoadStatus ParseLine(void)
 {
 	WORD line_number;
 	int buffer_index;
 	int line_start_index;
 	int token_index;
 	wchar_t uch;
-	bool success = true;
+	LoadStatus load_status = LS_Success;
 	BYTE current_token;
 	int token_pos;
 	int i;
@@ -270,7 +270,7 @@ static bool ParseLine(void)
 
 		// check for empty line
 		if(uch == '\0')
-			return success;
+			return load_status;
 
 		// check for non-whitespace
 		if(iswalnum(uch))
@@ -288,27 +288,27 @@ static bool ParseLine(void)
 		{
 			// convert to line number
 			line_number = 0;
-			while(success && iswdigit(uch))
+			while(load_status == LS_Success && iswdigit(uch))
 			{
 				line_number = line_number * 10 + (uch - '0');
 				if(line_number > 65535)
-					success = false;
+					load_status = LS_Fatal;
 				uch = l_unicode_line_buffer[++buffer_index];
 			}
 
 			// skip whitespaces
-			while(success && uch == ' ' || uch == '\t')
+			while(load_status == LS_Success && uch == ' ' || uch == '\t')
 				uch = l_unicode_line_buffer[++buffer_index];
 
 			// store line header
-			if(success)
+			if(load_status == LS_Success)
 			{
 				((BASLine*)&g_db_buffer[line_start_index])->LineNumber = line_number;
 				g_db_buffer_length += sizeof(BASLine);
 			}
 
 			// tokenize line
-			while(success && l_unicode_line_buffer[buffer_index] != '\0')
+			while(load_status == LS_Success && l_unicode_line_buffer[buffer_index] != '\0')
 			{
 				// check for escape characters
 				if(l_unicode_line_buffer[buffer_index] == '\\')
@@ -324,12 +324,12 @@ static bool ParseLine(void)
 						// store character defined by hex number
 						case 'X':
 						case 'x':
-							g_db_buffer[g_db_buffer_length++] = UnicodeToHex(buffer_index, &success);
+							g_db_buffer[g_db_buffer_length++] = UnicodeToHex(buffer_index, &load_status);
 							buffer_index += 2;
 							break;
 
 						default:
-							success = false;
+							load_status = LS_Success;
 							break;
 					}
 				}
@@ -372,7 +372,7 @@ static bool ParseLine(void)
 								g_db_buffer[g_db_buffer_length++] = (BYTE)current_token - 0x80;
 							}
 							else
-								success = false;
+								load_status = LS_Success;
 						}
 						else
 						{
@@ -382,7 +382,7 @@ static bool ParseLine(void)
 								g_db_buffer[g_db_buffer_length++] = (BYTE)uch;
 							}
 							else
-								success = false;
+								load_status = LS_Success;
 						}
 					}
 
@@ -419,19 +419,19 @@ static bool ParseLine(void)
 			}
 
 			// add line terminator
-			if(success)
+			if(load_status == LS_Success)
 				g_db_buffer[g_db_buffer_length++] = BAS_LINEND;
 
 			// check and update line length
 			if((g_db_buffer_length - line_start_index) > 252)
-				success = false;
+				load_status = LS_Success;
 			else
 				((BASLine*)&g_db_buffer[line_start_index])->LineLength = g_db_buffer_length - line_start_index;
 
 			// quotes should be in pair
 			if((l_basic_line_parser_state & ST_QUOTATION) != 0 && (l_basic_line_parser_state & ST_REMARK) == 0)
 			{
-				success = false;
+				load_status = LS_Fatal;
 			}
 			else
 			{
@@ -470,29 +470,29 @@ static bool ParseLine(void)
 					buffer_index += 5;
 
 					// skip whitespaces
-					while(success && l_unicode_line_buffer[buffer_index] == ' ' || l_unicode_line_buffer[buffer_index] == '\t')
+					while(load_status == LS_Success && l_unicode_line_buffer[buffer_index] == ' ' || l_unicode_line_buffer[buffer_index] == '\t')
 						buffer_index++;
 
 					// convert escape characters
-					while(success && l_unicode_line_buffer[buffer_index] != '\0')
+					while(load_status == LS_Success && l_unicode_line_buffer[buffer_index] != '\0')
 					{
 						if(l_unicode_line_buffer[buffer_index] == '\\' && towupper(l_unicode_line_buffer[buffer_index+1]) == 'X')
 						{
 							buffer_index += 2;
-							g_db_buffer[g_db_buffer_length++] = UnicodeToHex(buffer_index, &success);
+							g_db_buffer[g_db_buffer_length++] = UnicodeToHex(buffer_index, &load_status);
 							buffer_index += 2;
 						}
 						else
-							success = false;
+							load_status = LS_Fatal;
 					}
 				}
 				else
-					success = false;
+					load_status = LS_Fatal;
 			}
 		}
 	}	 
 
-	return success;
+	return load_status;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -513,9 +513,9 @@ static BYTE HexDigitToNumber(char in_digit)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Converts Ansi hex characters to byte
-static BYTE UnicodeToHex(int in_pos, bool* in_success)
+static BYTE UnicodeToHex(int in_pos, LoadStatus* in_load_status)
 {
-	if(!(*in_success))
+	if((*in_load_status) != LS_Success)
 		return 0;
 
 	if(isxdigit(l_unicode_line_buffer[in_pos]) && isxdigit(l_unicode_line_buffer[in_pos+1]))
@@ -524,10 +524,10 @@ static BYTE UnicodeToHex(int in_pos, bool* in_success)
 	}
 	else
 	{
-		*in_success = false;
+		*in_load_status = LS_Fatal;
 	}
 
-	return 0;
+	return LS_Fatal;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

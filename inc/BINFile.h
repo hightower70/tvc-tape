@@ -25,6 +25,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 bool BINSave(wchar_t* in_file_name);
-bool BINLoad(wchar_t* in_file_name);
+LoadStatus BINLoad(wchar_t* in_file_name);
 
 #endif

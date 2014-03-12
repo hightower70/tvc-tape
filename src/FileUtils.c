@@ -296,12 +296,13 @@ bool StringStartsWith(const wchar_t* in_string, const wchar_t* in_prefix)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Reads a block from a file and sets success flag
-void ReadBlock(FILE* in_file, void* in_buffer, int in_size, bool* inout_success)
+void ReadBlock(FILE* in_file, void* in_buffer, int in_size, LoadStatus* inout_load_status)
 {
-	if(!(*inout_success))
+	if(*inout_load_status != LS_Success)
 		return;
 
-	*inout_success = (fread(in_buffer, in_size, 1, in_file) == 1);
+	if(fread(in_buffer, in_size, 1, in_file) != 1)
+		*inout_load_status = LS_Fatal;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

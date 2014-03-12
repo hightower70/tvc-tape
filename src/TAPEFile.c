@@ -29,7 +29,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
-#define MIDDLE_PERIOD_BUFFER_LENGTH 16
+#define MIDDLE_PERIOD_BUFFER_LENGTH 256
 #define SYNC_PHASE_MAX_DIFFERENCE 2
 #define SECTOR_END_PERIOD_COUNT 5
 
@@ -75,9 +75,11 @@ static bool EncodeBlock(BYTE* in_buffer, int in_length);
 static void DisplayOutputHeaderProgress(int in_pos, int in_max_pos);
 static void DisplayOutputDataProgress(int in_pos, int in_max_pos);
 static void DisplayInputDataProgress(void);
-static bool DecodeSample(INT32 in_sample);
+static void DisplayFailedToLoad(void);
+static LoadStatus DecodeSample(INT32 in_sample);
+static LoadStatus DecoderRestart(void);
 static void UpdateMiddleFrequency(DWORD in_frequency, DWORD in_measured_period_length);
-static bool StoreByte(BYTE in_data_byte);
+static LoadStatus StoreByte(BYTE in_data_byte);
 static int IntABS(int in_value);
 static bool StoreByteInStruct(BYTE in_data_byte, void* in_struct, size_t in_size, bool in_add_to_crc);
 static void SetSectorLength(BYTE in_sector_length);
@@ -124,7 +126,7 @@ static bool l_header_block_valid;
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
 
-static int l_sample_index = 0;
+static int l_demod_sample_index = 0;  // for debugging only (will be removed)
 
 WORD g_frequency_offset = 0;
 WORD g_leading_length = 4812;
@@ -132,7 +134,7 @@ WORD g_gap_length = 1000;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Initialization of tape functions
-void TAPEInit(void)
+bool TAPEOpenInput(wchar_t* in_file_name)
 {
 	l_prev_input_percentage = 0xff;
 	l_prev_input_total_seconds = 0xffffffff;
@@ -151,18 +153,20 @@ void TAPEInit(void)
 	{
 		WFOpenOutput(g_output_wave_file, 16);
 	}
+
+	return WMOpenInput(in_file_name);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // TAPE Load
-bool TAPELoad(void)
+LoadStatus TAPELoad(void)
 {
 	bool success = true;
 	INT32	sample;
-	bool tape_file_loaded = false;
+	LoadStatus load_status = LS_Unknown;
 
 	// scan for files
-	while(success && !tape_file_loaded)
+	while(load_status == LS_Unknown)
 	{
 		success = WMReadSample(&sample);
 	 
@@ -170,23 +174,56 @@ bool TAPELoad(void)
 		{
 			sample = WFProcessSample(sample);
 			sample = WLCProcessSample(sample);
-			tape_file_loaded = DecodeSample(sample);
+			load_status = DecodeSample(sample);
 
 			WFWriteSample(sample);
 
-			if(tape_file_loaded)
-				DisplayMessage(L"\r");
-			else
-				DisplayInputDataProgress();
+			switch(load_status)
+			{
+				case LS_Unknown:
+					DisplayInputDataProgress();
+					break;
+
+				case LS_Error:
+					DisplayFailedToLoad();
+					break;
+
+				case LS_Success:
+					DisplayMessage(L"\r");
+					break;
+			}
+		}
+		else
+		{
+			load_status = LS_Fatal;
 		}
 	}
 
-	return tape_file_loaded;
+	return load_status;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Closes tape file
-void TAPEClose(void)
+void TAPECloseInput(void)
+{
+	WFCloseOutput(false);
+	WLCClose();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Creates output file
+bool TAPECreateOutput(wchar_t* in_file_name)
+{
+		// openwave output
+	if(!WMOpenOutput(in_file_name))
+		return false;
+	else
+		return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Closes output file
+void TAPECloseOutput(void)
 {
 	WFCloseOutput(false);
 	WLCClose();
@@ -205,10 +242,6 @@ bool TAPESave(wchar_t* in_file_name)
 	int sector_size;
 	int tape_file_name_length;
 	bool success = true;
-
-	// openwave output
-	if(!WMOpenOutput(in_file_name))
-		return false;
 
 	// block leading
 	DisplayOutputHeaderProgress(0, 10);
@@ -344,8 +377,6 @@ bool TAPESave(wchar_t* in_file_name)
 		success = GenerateDDSSilence(50);
 	}
 
-	WMCloseOutput(!success);
-
 	if(g_output_file_type == FT_WaveInOut)
 		DisplayMessage(L"\n");
 
@@ -473,6 +504,17 @@ static bool EncodeBlock(BYTE* in_buffer, int in_length)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Display failed to load message
+static void DisplayFailedToLoad(void)
+{
+	wchar_t buffer[DB_MAX_FILENAME_LENGTH+1];
+
+	TVCStringToUNICODEString(buffer, g_db_file_name);
+	DisplayMessageAndClearToLineEnd(L"Failed to load file: %s (signal lost)", buffer);
+	DisplayMessage(L"\n");
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Displays input status message
 static void DisplayInputDataProgress(void)
 {
@@ -540,17 +582,27 @@ static void DisplayInputDataProgress(void)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Restarts decoder
-void DecoderRestart(void)
+static LoadStatus DecoderRestart(void)
 {
+	LoadStatus load_status = LS_Unknown;
+
+	if(l_tape_reader_status == TRST_Data)
+	{
+		l_header_block_valid = false;
+		load_status = LS_Error;
+	}
+
+	// reset decoder
 	l_decoder_state = DST_Idle;
 	WLCSetMode(WLCMT_NoiseKiller);
-	if(l_tape_reader_status == TRST_Data)
-		l_header_block_valid = false;
+	l_tape_reader_status = TRST_Idle;
+
+	return load_status;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Process one sample
-bool DecodeSample(INT32 in_sample)
+static LoadStatus DecodeSample(INT32 in_sample)
 {
 	DWORD period_length;
 	int high_period_length;
@@ -558,7 +610,7 @@ bool DecodeSample(INT32 in_sample)
 	int oversampled_length;
 	SignalPhaseType current_phase;
 	bool half_period_end;
-	bool buffer_valid = false;
+	LoadStatus load_status = LS_Unknown;
 
 	// cache period length
 	high_period_length = l_period_high_length;
@@ -638,7 +690,7 @@ bool DecodeSample(INT32 in_sample)
 				}
 				else
 				{
-					DecoderRestart();
+					load_status = DecoderRestart();
 				}
 			}
 			break;
@@ -681,7 +733,7 @@ bool DecodeSample(INT32 in_sample)
 						else
 						{
 							if(period_length < leading_min || period_length > sync_max)
-								DecoderRestart();
+								load_status = DecoderRestart();
 						}
 					}
 				}
@@ -786,7 +838,7 @@ bool DecodeSample(INT32 in_sample)
 						{
 							l_bit_counter = 0;
 
-							buffer_valid = StoreByte(l_data_byte);
+							load_status = StoreByte(l_data_byte);
 						}
 					}
 					break;
@@ -795,7 +847,7 @@ bool DecodeSample(INT32 in_sample)
 				case DST_SectorEnd:
 					l_sector_end_period_count++;
 					if(l_sector_end_period_count>=SECTOR_END_PERIOD_COUNT)
-						DecoderRestart();
+						load_status = DecoderRestart();
 					break;
 			}
 	}
@@ -803,12 +855,12 @@ bool DecodeSample(INT32 in_sample)
 	{
 		// check for signal loss
 		if((high_period_length + low_period_length) > PERIOD_SYNC * (100 + LEADING_FREQUENCY_TOLERANCE) / 100 )
-			DecoderRestart();
+			load_status = DecoderRestart();
 	}
 
-	l_sample_index++;
+	l_demod_sample_index++;
 
-	return buffer_valid;
+	return load_status;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -823,9 +875,9 @@ static int IntABS(int in_value)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Stores data byte readed by the decoder
-static bool StoreByte(BYTE in_data_byte)
+static LoadStatus StoreByte(BYTE in_data_byte)
 {
-	bool buffer_is_valid = false;
+	LoadStatus load_status = LS_Unknown;
 
 	switch (l_tape_reader_status)
 	{
@@ -840,6 +892,7 @@ static bool StoreByte(BYTE in_data_byte)
 					// load sector header
 					ChangeReaderStatus(TRST_SectorHeader);
 
+					// new block header is coming -> invalidate current
 					if(l_block_header.BlockType == TAPE_BLOCKHDR_TYPE_HEADER)
 						l_header_block_valid = false;
 
@@ -851,7 +904,7 @@ static bool StoreByte(BYTE in_data_byte)
 				else
 				{
 					ChangeReaderStatus(TRST_Idle);
-					DecoderRestart();
+					load_status = DecoderRestart();
 				}
 			}
 			break;
@@ -874,7 +927,7 @@ static bool StoreByte(BYTE in_data_byte)
 						else
 						{
 							ChangeReaderStatus(TRST_Idle);
-							DecoderRestart();
+							load_status = DecoderRestart();
 						}
 						break;
 
@@ -887,7 +940,7 @@ static bool StoreByte(BYTE in_data_byte)
 					// unknown block
 					default:
 						ChangeReaderStatus(TRST_Idle);
-						DecoderRestart();
+						load_status = DecoderRestart();
 						break;
 				}
 			}
@@ -914,7 +967,7 @@ static bool StoreByte(BYTE in_data_byte)
 			else
 			{
 				ChangeReaderStatus(TRST_Idle);
-				DecoderRestart();
+				load_status = DecoderRestart();
 			}
 			break;
 
@@ -941,7 +994,7 @@ static bool StoreByte(BYTE in_data_byte)
 			else
 			{
 				ChangeReaderStatus(TRST_Idle);
-				DecoderRestart();
+				load_status = DecoderRestart();
 			}
 			break;
 
@@ -995,7 +1048,7 @@ static bool StoreByte(BYTE in_data_byte)
 							if(l_header_block_valid)
 							{
 								l_header_block_valid = false;
-								buffer_is_valid = true;
+								load_status = LS_Success;
 							}
 						}
 						else
@@ -1025,7 +1078,7 @@ static bool StoreByte(BYTE in_data_byte)
 			break;
 	}
 
-	return buffer_is_valid;
+	return load_status;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

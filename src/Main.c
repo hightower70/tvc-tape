@@ -74,6 +74,8 @@ int wmain( int argc, wchar_t **argv )
 	wchar_t output_file_name[MAX_PATH_LENGTH+1];
 	bool success = true;
 	FileTypes output_file_type;
+	LoadStatus load_status;
+	int pos;
 
 	// initialize
 	ConsoleInit();
@@ -124,13 +126,20 @@ int wmain( int argc, wchar_t **argv )
 			}
 		}
 	}
-
+	
 	// create multi container file for saving
 	switch(g_output_file_type)
 	{
 		case FT_TTP:
+			DisplayMessage(L"Creating TTP file:%s\n", g_output_file_name);
 			GenerateUniqueFileName(g_output_file_name);
 			success = TTPCreateOutput(g_output_file_name);
+			break;
+
+		case FT_WAV:
+			DisplayMessage(L"Creating WAV file:%s\n", g_output_file_name);
+			GenerateUniqueFileName(g_output_file_name);
+			success = TAPECreateOutput(g_output_file_name);
 			break;
 	}
 
@@ -138,136 +147,163 @@ int wmain( int argc, wchar_t **argv )
 	// Loop for processing input file
 	do
 	{
+		load_status = LS_Success;
+
 		// load input file name from the list file
 		if(l_input_file_name_list != NULL)
 		{
-			fgetws(g_input_file_name, MAX_PATH_LENGTH, l_input_file_name_list);
-		}
-
-		// determine input file type
-		g_input_file_type = DetermineFileType(g_input_file_name);
-		if(g_input_file_type == FT_Unknown)
-		{
-			DisplayError(L"Error: Invalid input file type: %s.\n", g_input_file_name);
-			return 1;
-		}
-
-		// handle cases when only one file was specified
-		if(g_output_file_name[0] == '\0')
-		{
-			// depends on file type
-			switch (g_input_file_type)
+			do
 			{
-				// CAS->WAV conversion
+				// read filename
+				if(fgetws(g_input_file_name, MAX_PATH_LENGTH, l_input_file_name_list) == NULL)
+				{
+					load_status = LS_Fatal;
+					break;
+				}
+
+				// remove trailing new line character
+				pos = wcslen(g_input_file_name);
+				if(pos > 0 && g_input_file_name[pos-1] == L'\n')
+					g_input_file_name[pos-1] = L'\0';
+
+				// skip leading spaces
+				pos = 0;
+				while(g_input_file_name[pos] == L' ')
+					pos++;
+
+				// skip comment lines
+			}	while(g_input_file_name[pos] == L'#');
+		}
+
+		if(load_status == LS_Success)
+		{
+			// determine input file type
+			g_input_file_type = DetermineFileType(g_input_file_name);
+			if(g_input_file_type == FT_Unknown)
+			{
+				DisplayError(L"Error: Invalid input file type: %s.\n", g_input_file_name);
+				return 1;
+			}
+
+			// handle cases when only one file was specified
+			if(g_output_file_name[0] == '\0')
+			{
+				// depends on file type
+				switch (g_input_file_type)
+				{
+					// CAS->WAV conversion
+					case FT_CAS:
+						wcscpy(g_output_file_name, g_input_file_name);
+						ChangeFileExtension(g_output_file_name, L"wav");
+						g_output_file_type = FT_WAV;
+						break;
+
+					// WAV->CAS conversion
+					case FT_WAV:
+						g_output_file_type = FT_CAS;
+						break;
+
+					// CAS->BAS conversion
+					case FT_BAS:
+						wcscpy(g_output_file_name, g_input_file_name);
+						ChangeFileExtension(g_output_file_name, L"cas");
+						g_output_file_type = FT_CAS;
+						break;
+
+					// WaveIn->CAS
+					case FT_WaveInOut:
+						g_output_file_type = FT_CAS;
+						break;
+
+					// TTP->CAS
+					case FT_TTP:
+						g_output_file_type = FT_CAS;
+						break;
+				}
+			}
+			else
+			{
+				// determine output file type from file name
+				g_output_file_type = DetermineFileType(g_output_file_name);
+
+				// if wildcard used for filename then use only extension as a filetype
+				if(g_output_file_name[0] == '*')
+					g_output_file_name[0] = '\0';
+
+			}
+
+			// check output file type
+			if(g_output_file_type == FT_Unknown)
+			{
+				DisplayError(L"Error: Invalid output file type: %s.\n", g_output_file_name);
+				return 1;
+			}
+
+			// check input-output type
+			if((g_input_file_type == FT_WaveInOut || g_input_file_type == FT_WAV) && (g_output_file_type == FT_WaveInOut || g_output_file_type == FT_WAV))
+			{
+				DisplayError(L"Error: Wave In/Wav and Wave out/Wav can't be used together.\n");
+				return 1;
+			}
+
+			// check -w switch
+			if(g_output_wave_file[0] != '\0' && (g_output_file_type == FT_WAV || g_output_file_type == FT_WaveInOut))
+			{
+				DisplayError(L"Error: The -w switch can be used only when wav or wave in is used.\n");
+				return 1;
+			}
+
+			// Load input file
+			switch(g_input_file_type)
+			{
 				case FT_CAS:
-					wcscpy(g_output_file_name, g_input_file_name);
-					ChangeFileExtension(g_output_file_name, L"wav");
-					g_output_file_type = FT_WAV;
+					DisplayMessage(L"Loading CAS file:%s\n",g_input_file_name);
+					load_status = CASLoad(g_input_file_name);
+					success = (load_status == LS_Success);
 					break;
 
-				// WAV->CAS conversion
-				case FT_WAV:
-					g_output_file_type = FT_Dynamic;
-					break;
-
-				// CAS->BAS conversion
 				case FT_BAS:
-					wcscpy(g_output_file_name, g_input_file_name);
-					ChangeFileExtension(g_output_file_name, L"cas");
-					g_output_file_type = FT_CAS;
+					DisplayMessage(L"Loading BAS file:%s\n",g_input_file_name);
+					load_status = BASLoad(g_input_file_name);
+					success = (load_status == LS_Success);
 					break;
 
-				// WaveIn->CAS
-				case FT_WaveInOut:
-					g_output_file_type = FT_CAS;
+				case FT_WAV:
+					DisplayMessage(L"Opening WAV file:%s\n",g_input_file_name);
+
+					// set filter
+					if(g_filter_type == FT_Auto)
+						g_filter_type = FT_Strong;
+
+					success = TAPEOpenInput(g_input_file_name);
 					break;
 
-				// TTP->CAS
 				case FT_TTP:
-					g_output_file_type = FT_CAS;
+					DisplayMessage(L"Loading TTP file:%s\n",g_input_file_name);
+					success = TTPOpenInput(g_input_file_name);
+					break;
+
+				case FT_HEX:
+					DisplayMessage(L"Loading HEX file:%s\n",g_input_file_name);
+					load_status = HEXLoad(g_input_file_name);
+					success = (load_status == LS_Success);
+					break;
+
+				case FT_BIN:
+					DisplayMessage(L"Loading BIN file:%s\n",g_input_file_name);
+					load_status = BINLoad(g_input_file_name);
+					success = (load_status == LS_Success);
+					break;
+
+				case FT_WaveInOut:
+					DisplayMessage(L"Processing audio input. Press <ESC> to stop.\n");
+					// set filter
+					if(g_filter_type == FT_Auto)
+						g_filter_type = FT_Fast;
+
+					success = TAPEOpenInput(g_input_file_name);
 					break;
 			}
-		}
-		else
-		{
-			// determine output file type from file name
-			g_output_file_type = DetermineFileType(g_output_file_name);
-
-			// if wildcard used for filename then use only extension as a filetype
-			if(g_output_file_name[0] == '*')
-				g_output_file_name[0] = '\0';
-
-		}
-
-		// check output file type
-		if(g_output_file_type == FT_Unknown)
-		{
-			DisplayError(L"Error: Invalid output file type: %s.\n", g_output_file_name);
-			return 1;
-		}
-
-		// check input-output type
-		if((g_input_file_type == FT_WaveInOut || g_input_file_type == FT_WAV) && (g_output_file_type == FT_WaveInOut || g_output_file_type == FT_WAV))
-		{
-			DisplayError(L"Error: Wave In/Wav and Wave out/Wav can't be used together.\n");
-			return 1;
-		}
-
-		// check -w switch
-		if(g_output_wave_file[0] != '\0' && (g_output_file_type == FT_WAV || g_output_file_type == FT_WaveInOut))
-		{
-			DisplayError(L"Error: The -w switch can be used only when wav or wave in is used.\n");
-			return 1;
-		}
-
-		// Load input file
-		switch(g_input_file_type)
-		{
-			case FT_CAS:
-				DisplayMessage(L"Loading CAS file:%s\n",g_input_file_name);
-				success = CASLoad(g_input_file_name);
-				break;
-
-			case FT_BAS:
-				DisplayMessage(L"Loading BAS file:%s\n",g_input_file_name);
-				success = BASLoad(g_input_file_name);
-				break;
-
-			case FT_WAV:
-				DisplayMessage(L"Opening WAV file:%s\n",g_input_file_name);
-
-				// set filter
-				if(g_filter_type == FT_Auto)
-					g_filter_type = FT_Strong;
-
-				success = WMOpenInput(g_input_file_name);
-				TAPEInit();
-				break;
-
-			case FT_TTP:
-				DisplayMessage(L"Loading TTP file:%s\n",g_input_file_name);
-				success = TTPOpenInput(g_input_file_name);
-				break;
-
-			case FT_HEX:
-				DisplayMessage(L"Loading HEX file:%s\n",g_input_file_name);
-				success = HEXLoad(g_input_file_name);
-				break;
-
-			case FT_BIN:
-				DisplayMessage(L"Loading BIN file:%s\n",g_input_file_name);
-				success = BINLoad(g_input_file_name);
-				break;
-
-			case FT_WaveInOut:
-				DisplayMessage(L"Processing audio input. Press <ESC> to stop.\n");
-				// set filter
-				if(g_filter_type == FT_Auto)
-					g_filter_type = FT_Fast;
-
-				success = WMOpenInput(g_input_file_name);
-				TAPEInit();
-				break;
 		}
 
 		// display error
@@ -280,180 +316,210 @@ int wmain( int argc, wchar_t **argv )
 		// load file from multi file containers
 		do
 		{
-			if(success)
+			if(success && load_status == LS_Success)
 			{
 				switch(g_input_file_type)
 				{
 					case FT_WAV:
 					case FT_WaveInOut:
-						success = TAPELoad();
+						load_status = TAPELoad();
 						break;
 
 					case FT_TTP:
-						success = TTPLoad();
+						load_status = TTPLoad();
 						break;
 				}
-			}
 
-			// update flags
-			if(success)
-			{
-				if(g_forced_autostart != AUTOSTART_NOT_FORCED)
-					g_db_autostart = (g_forced_autostart == AUTOSTART_FORCED_TO_TRUE);
-				if(g_forced_copyprotect != COPYPROTECT_NOT_FORCED)
-					g_forced_copyprotect = (g_forced_autostart == COPYPROTECT_FORCED_TO_TRUE);
+				if(load_status == LS_Fatal)
+					success = false;
 			}
-
-			// generate output file name
-			if(success)
+				
+			// save file if source file sucessfully was loaded
+			if(load_status == LS_Success)
 			{
-				switch(g_output_file_type)
+				// update flags
+				if(success)
 				{
-					case FT_TTP:
+					if(g_forced_autostart != AUTOSTART_NOT_FORCED)
+						g_db_autostart = (g_forced_autostart == AUTOSTART_FORCED_TO_TRUE);
+					if(g_forced_copyprotect != COPYPROTECT_NOT_FORCED)
+						g_forced_copyprotect = (g_forced_autostart == COPYPROTECT_FORCED_TO_TRUE);
+				}
+
+				// generate output file name
+				if(success)
+				{
+					switch(g_output_file_type)
 					{
-						int buffer_pos;
-						int file_name_start_pos = 0;
-						int file_name_length;
-
-						// init
-						output_file_name[0] = '\0';
-
-						// use forced file name if exists
-						if(g_forced_tape_file_name[0] != '\0')
+						case FT_WaveInOut:
+						case FT_WAV:
+						case FT_TTP:
 						{
-							// copy filename
-							file_name_length = 0;
-							while(g_forced_tape_file_name[file_name_length] != '\0' && file_name_length < DB_MAX_FILENAME_LENGTH)
-							{
-								output_file_name[file_name_length] = g_forced_tape_file_name[file_name_length];
-								file_name_length++;
-							}
+							int buffer_pos;
+							int file_name_start_pos = 0;
+							int file_name_length;
 
-							output_file_name[file_name_length] = '\0';
-						}
-	
-						// update file name only when it is empty
-						file_name_length = wcslen(output_file_name);
-						if(file_name_length == 0)
-						{
-							// find file name start
-							buffer_pos = 0;
-							while(g_input_file_name[buffer_pos] != '\0')
+							// init
+							output_file_name[0] = '\0';
+
+							// use forced file name if exists
+							if(g_forced_tape_file_name[0] != '\0')
 							{
-								if(g_input_file_name[buffer_pos] == '\\' || g_input_file_name[buffer_pos] == ':' )
+								// copy filename
+								file_name_length = 0;
+								while(g_forced_tape_file_name[file_name_length] != '\0' && file_name_length < DB_MAX_FILENAME_LENGTH)
 								{
-									file_name_start_pos = buffer_pos;
+									output_file_name[file_name_length] = g_forced_tape_file_name[file_name_length];
+									file_name_length++;
 								}
 
-								buffer_pos++;
+								output_file_name[file_name_length] = '\0';
 							}
-
-							// copy file name
-							file_name_length = 0;
-							while(g_input_file_name[file_name_length] != '\0' && file_name_length < DB_MAX_FILENAME_LENGTH && g_input_file_name[file_name_length] != '.' )
+	
+							// update file name only when it is empty
+							file_name_length = wcslen(output_file_name);
+							if(file_name_length == 0)
 							{
-								output_file_name[file_name_length] = g_input_file_name[file_name_start_pos+file_name_length];
-								file_name_length++;
+								// find file name start
+								buffer_pos = 0;
+								while(g_input_file_name[buffer_pos] != '\0')
+								{
+									if(g_input_file_name[buffer_pos] == '\\' || g_input_file_name[buffer_pos] == ':' )
+									{
+										file_name_start_pos = buffer_pos;
+									}
+
+									buffer_pos++;
+								}
+
+								// copy file name
+								file_name_length = 0;
+								while(g_input_file_name[file_name_length] != '\0' && file_name_length < DB_MAX_FILENAME_LENGTH && g_input_file_name[file_name_length] != '.' )
+								{
+									output_file_name[file_name_length] = g_input_file_name[file_name_start_pos+file_name_length];
+									file_name_length++;
+								}
+								output_file_name[file_name_length] = '\0';
+
+								output_file_type = g_output_file_type;
 							}
-							output_file_name[file_name_length] = '\0';
 						}
-					}
-					break;
+						break;
 
-					default:
-						// handle dynamic output
-																			//TODO
-						// determine output file type
-						if(g_output_file_type == FT_Dynamic)
-						{	
-							//if(g_db_program_type == 0)
-								output_file_type = FT_CAS;
-							//else
-							//	output_file_type = FT_BAS;
-						}
-						else
-						{
-							output_file_type = g_output_file_type;
-						}
+						default:
+							// handle dynamic output
+							//TODO
+							// determine output file type
+							if(g_output_file_type == FT_Dynamic)
+							{	
+								//if(g_db_program_type == 0)
+									output_file_type = FT_CAS;
+								//else
+								//	output_file_type = FT_BAS;
+							}
+							else
+							{
+								output_file_type = g_output_file_type;
+							}
 
-						// determine output file name
-						if(g_output_file_name[0] != '\0')
-						{
-							wcscpy(output_file_name, g_output_file_name);
-						}
-						else
-						{
-							TVCToPCFilename(output_file_name, g_db_file_name);
-						}
+							// determine output file name
+							if(g_output_file_name[0] != '\0')
+							{
+								wcscpy(output_file_name, g_output_file_name);
+							}
+							else
+							{
+								TVCToPCFilename(output_file_name, g_db_file_name);
+							}
 						
-						// flag CRC error
-						if(g_db_crc_error_detected)
-						{
-							wcscat(output_file_name, L"!");
-						}
+							// flag CRC error
+							if(g_db_crc_error_detected)
+							{
+								wcscat(output_file_name, L"!");
+							}
 
-						// add extensnio and make it uniqie
-						AppendFileExtension(output_file_name, output_file_type);
-						GenerateUniqueFileName(output_file_name);
-						break;
+							// add extensnio and make it uniqie
+							AppendFileExtension(output_file_name, output_file_type);
+							GenerateUniqueFileName(output_file_name);
+							break;
+					}
 				}
-			}
 
-			// save file name
-			if(success && l_output_file_name_list != NULL)
-			{
-				fputws(output_file_name, l_output_file_name_list);
-				fputws(L"\n", l_output_file_name_list);
-			}
-
-			// Save output file
-			if(success)
-			{
-				// Save output file
-				switch(output_file_type)
+				// save file name
+				if(success && l_output_file_name_list != NULL)
 				{
-					case FT_CAS:
-						if(g_db_crc_error_detected)
-							DisplayMessageAndClearToLineEnd(L"Saving CAS file: %s (CRC Error)", output_file_name);
-						else
-							DisplayMessageAndClearToLineEnd(L"Saving CAS file: %s", output_file_name);
-						success = CASSave(output_file_name);
-						break;
-
-					case FT_BAS:
-						if(g_db_crc_error_detected)
-							DisplayMessageAndClearToLineEnd(L"Saving BAS file: %s (CRC Error)", output_file_name);
-						else
-							DisplayMessageAndClearToLineEnd(L"Saving BAS file: %s", output_file_name);
-						success = BASSave(output_file_name);
-						break;
-
-					case FT_WAV:
-						DisplayMessage(L"Saving WAV file: %s", output_file_name);
-						success = TAPESave(output_file_name);
-						break;
-
-					case FT_WaveInOut:
-						DisplayMessage(L"Generating tape signal. Press <ESC> to stop.\n");
-						success = TAPESave(output_file_name);
-						break;
-
-					case FT_TTP:
-						DisplayMessageAndClearToLineEnd(L"Saving: %s", output_file_name);
-						success = TTPSave(output_file_name);
-						break;
-
-					case FT_BIN:
-						DisplayMessageAndClearToLineEnd(L"Saving BIN file: %s", output_file_name);
-						success = BINSave(output_file_name);
-						break;
-
-					case FT_HEX:
-						DisplayMessageAndClearToLineEnd(L"Saving HEX file: %s", output_file_name);
-						success = HEXSave(output_file_name);
-						break;
+					fputws(output_file_name, l_output_file_name_list);
+					fputws(L"\n", l_output_file_name_list);
 				}
-				DisplayMessage(L"\n");
+
+				// Save output file
+				if(success)
+				{
+					// Save output file
+					switch(output_file_type)
+					{
+						case FT_CAS:
+							if(g_db_crc_error_detected)
+								DisplayMessageAndClearToLineEnd(L"Saving CAS file: %s (CRC Error)", output_file_name);
+							else
+								DisplayMessageAndClearToLineEnd(L"Saving CAS file: %s", output_file_name);
+							success = CASSave(output_file_name);
+							break;
+
+						case FT_BAS:
+							if(g_db_crc_error_detected)
+								DisplayMessageAndClearToLineEnd(L"Saving BAS file: %s (CRC Error)", output_file_name);
+							else
+								DisplayMessageAndClearToLineEnd(L"Saving BAS file: %s", output_file_name);
+							success = BASSave(output_file_name);
+							break;
+
+						case FT_WAV:
+							if(l_input_file_name_list == NULL)
+							{
+								DisplayMessage(L"Saving WAV file: %s", output_file_name);
+							}
+							success = TAPESave(output_file_name);
+							break;
+
+						case FT_WaveInOut:
+							DisplayMessage(L"Generating tape signal. Press <ESC> to stop.\n");
+							success = TAPESave(output_file_name);
+							break;
+
+						case FT_TTP:
+							if(l_input_file_name_list == NULL)
+							{
+								DisplayMessageAndClearToLineEnd(L"Saving: %s", output_file_name);
+							}
+							success = TTPSave(output_file_name);
+							break;
+
+						case FT_BIN:
+							DisplayMessageAndClearToLineEnd(L"Saving BIN file: %s", output_file_name);
+							success = BINSave(output_file_name);
+							break;
+
+						case FT_HEX:
+							DisplayMessageAndClearToLineEnd(L"Saving HEX file: %s", output_file_name);
+							success = HEXSave(output_file_name);
+							break;
+					}
+
+					if(l_input_file_name_list == NULL)
+						DisplayMessage(L"\n");
+				}
+			}
+			else
+			{
+				// save file name
+				if(load_status == LS_Error && l_output_file_name_list != NULL)
+				{
+					TVCStringToUNICODEString(output_file_name, g_db_file_name);
+					fputws(L"#", l_output_file_name_list);
+					fputws(output_file_name, l_output_file_name_list);
+					fputws(L"\n", l_output_file_name_list);
+				}
 			}
 		}	while(success && (g_input_file_type == FT_TTP || ((g_input_file_type == FT_WAV || g_input_file_type == FT_WaveInOut) && !g_stop_after_one_file)));
 	}	while(l_input_file_name_list != NULL && !feof(l_input_file_name_list));
@@ -470,7 +536,7 @@ int wmain( int argc, wchar_t **argv )
 		case FT_WAV:
 		case FT_WaveInOut:
 			WMCloseInput();
-			TAPEClose();
+			TAPECloseInput();
 			break;
 
 		case FT_TTP:
@@ -483,7 +549,7 @@ int wmain( int argc, wchar_t **argv )
 	{
 		case FT_WAV:
 		case FT_WaveInOut:
-			TAPEClose();
+			TAPECloseOutput();
 			break;
 
 		case FT_TTP:
@@ -567,7 +633,7 @@ static bool ParseWavePreprocessingParameters(wchar_t* in_param)
 		switch (index)
 		{
 			case 0:
-				g_filter_type = (BYTE)value;
+				g_filter_type = (FilterTypes)value;
 				break;
 
 			case 1:

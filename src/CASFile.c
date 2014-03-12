@@ -31,10 +31,10 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Loads CAS file
-bool CASLoad(wchar_t* in_file_name)
+LoadStatus CASLoad(wchar_t* in_file_name)
 {
 	FILE* cas_file = NULL;
-	bool success = true;
+	LoadStatus load_status = LS_Success;
 	CASUPMHeaderType upm_header;							
 	CASProgramFileHeaderType program_header;
 
@@ -42,30 +42,30 @@ bool CASLoad(wchar_t* in_file_name)
 	cas_file = _wfopen(in_file_name, L"rb");
 
 	if(cas_file == NULL)
-		success = false;
+		load_status = LS_Fatal;
 
-	if(success)
+	if(load_status == LS_Success)
 	{
 		// load UPM header
-		ReadBlock(cas_file, &upm_header, sizeof(upm_header), &success);
+		ReadBlock(cas_file, &upm_header, sizeof(upm_header), &load_status);
 
 		// load program header
-		ReadBlock(cas_file, &program_header, sizeof(program_header), &success);
+		ReadBlock(cas_file, &program_header, sizeof(program_header), &load_status);
 
 		// Check validity
 		if(!CASCheckHeaderValidity(&program_header))
-			success = false;
+			load_status = LS_Fatal;
 
 		if(!CASCheckUPMHeaderValidity(&upm_header))
-			success = false;
+			load_status = LS_Fatal;
 	}
 
 	// load program data
-	if(success)
+	if(load_status == LS_Success)
 	{
-		ReadBlock(cas_file, g_db_buffer, program_header.FileLength, &success);
+		ReadBlock(cas_file, g_db_buffer, program_header.FileLength, &load_status);
 
-		if(success)
+		if(load_status == LS_Success)
 		{
 			g_db_buffer_length = program_header.FileLength;
 			g_db_copy_protect = (upm_header.CopyProtect != 0);
@@ -80,7 +80,7 @@ bool CASLoad(wchar_t* in_file_name)
 	if(cas_file != NULL)
 		fclose(cas_file);
 										 
-	return success;
+	return load_status;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

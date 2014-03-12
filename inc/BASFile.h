@@ -28,7 +28,7 @@ typedef enum
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 void BASInit(void);
-bool BASLoad(wchar_t* in_file_name);
+LoadStatus BASLoad(wchar_t* in_file_name);
 bool BASSave(wchar_t* in_file_name);
 int BASFindEnd(void);
 

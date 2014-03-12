@@ -19,10 +19,10 @@
 // Types
 typedef enum
 {
-	FT_Auto,
+	FT_NoFilter,
 	FT_Fast,
 	FT_Strong,
-	FT_NoFilter
+	FT_Auto
 } FilterTypes;
 
 ///////////////////////////////////////////////////////////////////////////////

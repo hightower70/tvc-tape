@@ -16,7 +16,6 @@
 // Includes
 #include <Types.h>
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Types
 
@@ -34,9 +33,18 @@ typedef enum
 	FT_Dynamic // 
 } FileTypes;
 
+// Status (result) codes of file load operation
+typedef enum
+{
+	LS_Unknown,
+	LS_Fatal,
+	LS_Error,
+	LS_Success
+} LoadStatus;
+
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-void ReadBlock(FILE* in_file, void* in_buffer, int in_size, bool* inout_success);
+void ReadBlock(FILE* in_file, void* in_buffer, int in_size, LoadStatus* inout_load_status);
 void WriteBlock(FILE* in_file, void* in_buffer, int in_size, bool* inout_success);
 
 void GenerateUniqueFileName(wchar_t* in_file_name);

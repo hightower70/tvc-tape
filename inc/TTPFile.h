@@ -38,7 +38,7 @@ typedef struct
 // Function prototypes
 bool TTPOpenInput(wchar_t* in_file_name);
 bool TTPCreateOutput(wchar_t* in_file_name);
-bool TTPLoad(void);
+LoadStatus TTPLoad(void);
 bool TTPSave(wchar_t* in_tape_file_name);
 void TTPCloseInput(void);
 void TTPCloseOutput(void);

@@ -37,7 +37,7 @@ static bool ReadHexDigits( FILE *in_file, int in_digit_number, WORD* in_value);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Loads HEX file
-bool HEXLoad(wchar_t* in_file_name)
+LoadStatus HEXLoad(wchar_t* in_file_name)
 {
 	FILE* hex_file;
 	bool success = true;
@@ -68,7 +68,7 @@ bool HEXLoad(wchar_t* in_file_name)
 	// open CAS file
 	hex_file = _wfopen(in_file_name, L"rb");
 	if(hex_file == NULL)
-		return false;
+		return LS_Fatal;
 
 	while(success && !feof(hex_file))
 	{
@@ -203,7 +203,10 @@ bool HEXLoad(wchar_t* in_file_name)
 	if(success)
 		g_db_buffer_length = pos;
 
-	return success;
+	if(success)
+		return LS_Success;
+	else
+		return LS_Fatal;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

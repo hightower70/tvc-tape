@@ -25,6 +25,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 bool HEXSave(wchar_t* in_file_name);
-bool HEXLoad(wchar_t* in_file_name);
+LoadStatus HEXLoad(wchar_t* in_file_name);
 
 #endif

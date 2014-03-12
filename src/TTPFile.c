@@ -62,12 +62,12 @@ bool TTPCreateOutput(wchar_t* in_file_name)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Loads TTP file
-bool TTPLoad(void)
+LoadStatus TTPLoad(void)
 {
 	TTPFileHeaderType ttp_file_header;
 	TAPEBlockHeaderType block_header;
 	CASProgramFileHeaderType cas_program_header;
-	bool success = true;
+	LoadStatus load_status = LS_Success;
 	TAPESectorHeaderType sector_header;
 	TAPESectorEndType sector_end;
 	BYTE tape_file_name_length;
@@ -77,39 +77,39 @@ bool TTPLoad(void)
 	int bytes_read;
 
 	// Load and check TTP file header
-	ReadBlock(l_ttp_input_file, &ttp_file_header, sizeof(TTPFileHeaderType), &success);
+	ReadBlock(l_ttp_input_file, &ttp_file_header, sizeof(TTPFileHeaderType), &load_status);
 	if(!TTPCheckValidity(&ttp_file_header))
-		success = false;
+		load_status = LS_Fatal;
 
 	// Load and check tape block header
-	ReadBlock(l_ttp_input_file, &block_header, sizeof(TAPEBlockHeaderType), &success);
+	ReadBlock(l_ttp_input_file, &block_header, sizeof(TAPEBlockHeaderType), &load_status);
 	if(!TAPEValidateBlockHeader(&block_header))
-		success = false;
+		load_status = LS_Fatal;
 
 	// Load and check tape header sector header
-	ReadBlock(l_ttp_input_file, &sector_header, sizeof(TAPESectorHeaderType), &success);
+	ReadBlock(l_ttp_input_file, &sector_header, sizeof(TAPESectorHeaderType), &load_status);
 	if(sector_header.SectorNumber != 0)
-		success = false;
+		load_status = LS_Fatal;
 	
 	// Load tape file name
-	ReadBlock(l_ttp_input_file, &tape_file_name_length, sizeof(BYTE), &success);
-	if(success)
+	ReadBlock(l_ttp_input_file, &tape_file_name_length, sizeof(BYTE), &load_status);
+	if(load_status == LS_Success)
 	{
 		if(tape_file_name_length <= DB_MAX_FILENAME_LENGTH)
 		{
-			ReadBlock(l_ttp_input_file, g_db_file_name, tape_file_name_length, &success);
+			ReadBlock(l_ttp_input_file, g_db_file_name, tape_file_name_length, &load_status);
 			g_db_file_name[tape_file_name_length] = '\0';
 		}
 		else
-			success = false;
+			load_status = LS_Fatal;
 	}
 
 	// Load and check CAS program header
-	ReadBlock(l_ttp_input_file, &cas_program_header, sizeof(CASProgramFileHeaderType), &success);
+	ReadBlock(l_ttp_input_file, &cas_program_header, sizeof(CASProgramFileHeaderType), &load_status);
 	if(!CASCheckHeaderValidity(&cas_program_header))
-		success = false;
+		load_status = LS_Fatal;
 
-	if(success)
+	if(load_status == LS_Success)
 	{
 		g_db_autostart = (cas_program_header.Autorun != 0);
 		g_db_copy_protect = (block_header.CopyProtect != 0);
@@ -117,15 +117,15 @@ bool TTPLoad(void)
 	}
 
 	// load header sector end
-	ReadBlock(l_ttp_input_file, &sector_end, sizeof(TAPESectorEndType), &success);
+	ReadBlock(l_ttp_input_file, &sector_end, sizeof(TAPESectorEndType), &load_status);
 
 	// load block header
-	ReadBlock(l_ttp_input_file, &block_header, sizeof(TAPEBlockHeaderType), &success);
+	ReadBlock(l_ttp_input_file, &block_header, sizeof(TAPEBlockHeaderType), &load_status);
 	if(!TAPEValidateBlockHeader(&block_header))
-		success = false;
+		load_status = LS_Fatal;
 
 	// load data sectors
-	if(success)
+	if(load_status == LS_Success)
 	{
 		if(cas_program_header.FileLength != 0)
 			sector_count = (cas_program_header.FileLength + 255) / 256;
@@ -136,12 +136,12 @@ bool TTPLoad(void)
 		bytes_read = 0;
 	}
 
-	while(success && sector_index <= sector_count)
+	while(load_status == LS_Success && sector_index <= sector_count)
 	{
 		// load sector header
-		ReadBlock(l_ttp_input_file, &sector_header, sizeof(TAPESectorHeaderType), &success);
+		ReadBlock(l_ttp_input_file, &sector_header, sizeof(TAPESectorHeaderType), &load_status);
 		if(sector_header.SectorNumber != sector_index)
-			success = false;
+			load_status = LS_Fatal;
 
 		// determine sector length
 		if(sector_header.BytesInSector == 0)
@@ -150,25 +150,25 @@ bool TTPLoad(void)
 			sector_length = sector_header.BytesInSector;
 
 		// check sector length
-		if(success && ((bytes_read + sector_length) >= DB_MAX_DATA_LENGTH))
-			success = false;
+		if(load_status == LS_Success && ((bytes_read + sector_length) >= DB_MAX_DATA_LENGTH))
+			load_status = LS_Fatal;
 
 		// load sector data
-		ReadBlock(l_ttp_input_file, ((BYTE*)g_db_buffer)+bytes_read, sector_length, &success);
+		ReadBlock(l_ttp_input_file, ((BYTE*)g_db_buffer)+bytes_read, sector_length, &load_status);
 		bytes_read += sector_length;
 
 		// load sector end
-		ReadBlock(l_ttp_input_file, &sector_end, sizeof(TAPESectorEndType), &success);
+		ReadBlock(l_ttp_input_file, &sector_end, sizeof(TAPESectorEndType), &load_status);
 
 		sector_index++;
 	}
 
-	if(success)
+	if(load_status == LS_Success)
 		g_db_buffer_length = (WORD)bytes_read;
 	else
 		g_db_buffer_length = 0;
 
-	return success;
+	return load_status;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
