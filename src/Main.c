@@ -521,7 +521,7 @@ int wmain( int argc, wchar_t **argv )
 					fputws(L"\n", l_output_file_name_list);
 				}
 			}
-		}	while(success && (g_input_file_type == FT_TTP || ((g_input_file_type == FT_WAV || g_input_file_type == FT_WaveInOut) && !g_stop_after_one_file)));
+		}	while(success && (g_input_file_type == FT_TTP || ((g_input_file_type == FT_WAV || g_input_file_type == FT_WaveInOut) && (load_status != LS_Success || !g_stop_after_one_file))));
 	}	while(l_input_file_name_list != NULL && !feof(l_input_file_name_list));
 
 	// close list file

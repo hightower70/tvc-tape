@@ -236,7 +236,7 @@ void AppendFileExtension(wchar_t* in_out_file_name, FileTypes in_filetypes)
 		while(l_file_extensions[i].Extension != NULL && l_file_extensions[i].Type != in_filetypes)
 			i++;
 
-		if(l_file_extensions[i].Type != FT_Unknown)
+		if(l_file_extensions[i].Extension != NULL && l_file_extensions[i].Type != FT_Unknown)
 		{
 			// append
 			wcscat(in_out_file_name, l_file_extensions[i].Extension);
