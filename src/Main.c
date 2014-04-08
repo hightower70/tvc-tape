@@ -126,6 +126,15 @@ int wmain( int argc, wchar_t **argv )
 			}
 		}
 	}
+
+	// try to determine output file type
+	if(success)
+	{
+		if(g_output_file_name[0] != '\0')
+		{
+			g_output_file_type = DetermineFileType(g_output_file_name); 
+		}
+	}
 	
 	// create multi container file for saving
 	switch(g_output_file_type)
@@ -139,6 +148,9 @@ int wmain( int argc, wchar_t **argv )
 		case FT_WAV:
 			DisplayMessage(L"Creating WAV file:%s\n", g_output_file_name);
 			GenerateUniqueFileName(g_output_file_name);
+			// no break
+
+		case FT_WaveInOut:
 			success = TAPECreateOutput(g_output_file_name);
 			break;
 	}

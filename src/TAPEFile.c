@@ -206,7 +206,7 @@ LoadStatus TAPELoad(void)
 // Closes tape file
 void TAPECloseInput(void)
 {
-	WFCloseOutput(false);
+	WMCloseOutput(false);
 	WLCClose();
 }
 
@@ -225,7 +225,7 @@ bool TAPECreateOutput(wchar_t* in_file_name)
 // Closes output file
 void TAPECloseOutput(void)
 {
-	WFCloseOutput(false);
+	WMCloseOutput(false);
 	WLCClose();
 }
 
