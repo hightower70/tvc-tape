@@ -32,6 +32,7 @@
 #include "Console.h"
 #include "WaveFilter.h"
 #include "WaveLevelControl.h"
+#include "WaveFile.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Types
@@ -318,6 +319,12 @@ int wmain( int argc, wchar_t **argv )
 			}
 		}
 
+		// open debug wave out file
+		if(g_output_wave_file[0] != '0')
+		{
+			WFOpenOutput(g_output_wave_file, 16);
+		}
+
 		// display error
 		if(!success)
 		{
@@ -567,6 +574,12 @@ int wmain( int argc, wchar_t **argv )
 		case FT_TTP:
 			TTPCloseOutput();
 			break;
+	}
+
+	// debug wave out close
+	if(g_output_wave_file[0] != '0')
+	{
+		WFCloseOutput(false);
 	}
 
 	// return with status

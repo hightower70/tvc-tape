@@ -148,12 +148,6 @@ bool TAPEOpenInput(wchar_t* in_file_name)
 	l_header_block_valid = false;
 	l_previous_sample = 0;
 
-	// open 
-	if(g_output_wave_file[0] != '0')
-	{
-		WFOpenOutput(g_output_wave_file, 16);
-	}
-
 	return WMOpenInput(in_file_name);
 }
 
@@ -172,9 +166,9 @@ LoadStatus TAPELoad(void)
 	 
 		if(success)
 		{
-			sample = WFProcessSample(sample);
-			sample = WLCProcessSample(sample);
-			load_status = DecodeSample(sample);
+			sample = WFProcessSample(sample);			// Digital filter
+			sample = WLCProcessSample(sample);		// Amplitude controller							
+			load_status = DecodeSample(sample);		// Decoder
 
 			WFWriteSample(sample);
 
