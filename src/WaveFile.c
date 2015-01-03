@@ -24,12 +24,15 @@ static FILE* l_input_wave_file = NULL;
 DWORD g_input_wav_file_sample_count;
 DWORD g_input_wav_file_sample_index;
 static WORD l_input_wav_file_bits_per_sample;
-
+static BYTE l_input_wav_file_sample_buffer;
+static BYTE l_input_wav_file_sample_bit_pos = 0;
 static FILE* l_output_wav_file = NULL;
 static FormatChunkType l_output_wav_file_format_chunk;
 static DWORD l_output_wav_file_sample_count;
 static DWORD l_output_wav_file_sample_index;
 static WORD l_output_wav_file_bits_per_sample;
+static BYTE l_output_wav_file_sample_buffer;
+static BYTE l_output_wav_file_sample_bit_pos = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -129,6 +132,7 @@ bool WFOpenInput(wchar_t* in_file_name)
 	}
 
 	g_input_wav_file_sample_index = 0;
+	l_input_wav_file_sample_bit_pos = 0;
 
 	return success;
 }
@@ -145,6 +149,31 @@ bool WFReadSample(INT32* out_sample)
 	switch (l_input_wav_file_bits_per_sample)
 	{
 		case 1:
+			if(l_input_wav_file_sample_bit_pos == 0)
+			{
+				// read data if buffer is empty
+				read_count = fread(&l_input_wav_file_sample_buffer, sizeof(BYTE), 1, l_input_wave_file);
+				if(read_count == 1)
+				{
+					success = true;
+				}
+			}
+			else
+			{
+				// there is date in the buffer
+				success = true;
+			}
+
+			if(success)
+			{
+				// get sample
+				*out_sample = ((l_input_wav_file_sample_buffer >> (7-l_input_wav_file_sample_bit_pos) & 0x01) != 0) ? MAXINT16 : MININT16;
+
+				// next bit
+				l_input_wav_file_sample_bit_pos++;
+				if(l_input_wav_file_sample_bit_pos == 8)
+					l_input_wav_file_sample_bit_pos = 0;
+			}
 			break;
 
 		case 8:
@@ -195,6 +224,8 @@ bool WFOpenOutput(wchar_t* in_file_name, BYTE in_bits_per_sample)
 	ChunkHeaderType chunk_header;
 
 	// create file
+	l_output_wav_file_sample_bit_pos = 0;
+	l_output_wav_file_sample_buffer = 0;
 	l_output_wav_file_sample_count = 0;
 	l_output_wav_file = _wfopen( in_file_name, L"w+b" );
 
@@ -238,6 +269,21 @@ void WFWriteSample(INT32 in_sample)
 
 	switch(l_output_wav_file_format_chunk.BitsPerSample)
 	{
+		case 1:
+			l_output_wav_file_sample_buffer <<= 1;
+			if(in_sample > 128)
+				l_output_wav_file_sample_buffer |= 1;
+
+			l_output_wav_file_sample_bit_pos++;
+			if(l_output_wav_file_sample_bit_pos > 7)
+			{
+				fwrite(&l_output_wav_file_sample_buffer, sizeof(BYTE), 1, l_output_wav_file );
+				l_output_wav_file_sample_bit_pos = 0;
+				l_output_wav_file_sample_buffer = 0;
+			}
+
+			break;
+
 		case 8:
 			fwrite(&in_sample, sizeof(BYTE), 1, l_output_wav_file );
 			break;
@@ -258,6 +304,13 @@ void WFCloseOutput(bool in_force_close)
 
 	if( l_output_wav_file == NULL )
 		return;
+
+	// save remaining bits in one bits per sample mode
+	if(l_output_wav_file_format_chunk.BitsPerSample == 1 && l_output_wav_file_sample_bit_pos > 0)
+	{
+		l_output_wav_file_sample_buffer <<= (8-l_output_wav_file_sample_bit_pos);
+		fwrite(&l_output_wav_file_sample_buffer, sizeof(BYTE), 1, l_output_wav_file );
+	}
 
 	// update riff header
 	fseek( l_output_wav_file, 0, SEEK_SET );

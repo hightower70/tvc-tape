@@ -59,6 +59,7 @@ int g_forced_autostart = AUTOSTART_NOT_FORCED;
 int g_forced_copyprotect = COPYPROTECT_NOT_FORCED;
 bool g_overwrite_output_file = false;
 bool g_stop_after_one_file = false;
+bool g_one_bit_wave_file = false;
 bool g_exclude_basic_program = false;
 WORD g_lomem_address = 6639;
 
@@ -320,7 +321,7 @@ int wmain( int argc, wchar_t **argv )
 		}
 
 		// open debug wave out file
-		if(g_output_wave_file[0] != '0')
+		if(g_output_wave_file[0] != '\0')
 		{
 			WFOpenOutput(g_output_wave_file, 16);
 		}
@@ -802,6 +803,7 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 
 				case '1':
 					g_stop_after_one_file = true;
+					g_one_bit_wave_file = true;
 					break;
 
 				case 'n':

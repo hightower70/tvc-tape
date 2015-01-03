@@ -100,7 +100,7 @@ void DisplayMessageAndClearToLineEnd(const wchar_t* format, ...)
 void PrintLogo(void)
 {
 	if(g_output_message)
-		fwprintf(stderr, L"TVCTape v0.1 (c)2013-2014 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
+		fwprintf(stderr, L"TVCTape v0.1 (c)2013-2015 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -256,8 +256,9 @@ void PrintHelp(void)
 			L"     l - length of the block leading signal in ms\n"
 			L"         (default = 0,1000,4812; fast=50,200,500)\n"
 			L"  -w filename  stores preprocessed wave data into the specified wav file\n"
-			L"  -1           stop wave (WAV file or WaveIn) processing after loading one file\n"
-			L"               successfully\n"
+			L"  -1           single bit wave file creation when WAV file output is specified\n"
+			L"               or stops wave (WAV file or WaveIn) processing after loading one\n"
+			L"               file successfully when wave input is selected\n"
 			L"  -e           exclude BASIC lines (saves only binary data behind the Basic\n"
 			L"               program storage) when\n"
 			L"               saving to HEX or BIN file.\n"

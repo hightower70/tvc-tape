@@ -65,5 +65,5 @@ extern bool g_output_message;
 extern bool g_overwrite_output_file;
 extern bool g_exclude_basic_program;
 extern WORD g_lomem_address;
-
+extern bool g_one_bit_wave_file;
 #endif
