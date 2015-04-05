@@ -22,6 +22,7 @@
 // Function prototypes
 bool UARTOpen(COMConfigType* in_config);
 void UARTSendBlock(BYTE* in_buffer, DWORD in_buffer_length);
+DWORD UARTReceiveBlock(BYTE* in_buffer, DWORD in_buffer_length, DWORD* out_bytes_received);
 void UARTClose(void);
 
 #endif

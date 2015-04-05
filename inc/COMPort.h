@@ -15,6 +15,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Includes
 #include "Types.h"
+#include "FileUtils.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Types
@@ -31,5 +32,6 @@ typedef struct
 // Function prototypes
 void COMInit(void);
 bool COMSave(wchar_t* in_tape_file_name);
-
+LoadStatus COMLoad(void);
+												 
 #endif

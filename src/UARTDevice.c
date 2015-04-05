@@ -14,6 +14,7 @@
 #include <Windows.h>
 #include "Types.h"
 #include "COMPort.h"
+#include "Console.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
@@ -44,7 +45,7 @@ bool UARTOpen(COMConfigType* in_config)
 		success = GetCommState( l_uart_handle, &comm_state );
 
 	comm_state.BaudRate = in_config->BaudRate;
-  comm_state.ByteSize = 8;
+	comm_state.ByteSize = in_config->TransferLength;
   comm_state.Parity   = NOPARITY;
   comm_state.StopBits = ONESTOPBIT;
 
@@ -73,6 +74,19 @@ void UARTSendBlock(BYTE* in_buffer, DWORD in_buffer_length)
 	DWORD bytes_written;
 
 	WriteFile( l_uart_handle, in_buffer, in_buffer_length, &bytes_written, NULL);
+}
+
+DWORD UARTReceiveBlock(BYTE* in_buffer, DWORD in_buffer_length, DWORD* out_bytes_received)
+{
+	SHORT s;
+
+	// read block
+	ReadFile(l_uart_handle, in_buffer, in_buffer_length, out_bytes_received, NULL);
+
+	// check for stop key
+	s = GetAsyncKeyState(STOP_KEY);
+
+	return ( s != 0);
 }
 
 void UARTClose(void)

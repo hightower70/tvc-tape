@@ -16,10 +16,10 @@
 // Includes
 #include <Windows.h>
 #include "WaveMapper.h"
+#include "Console.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
-#define STOP_KEY VK_ESCAPE
 #define ERROR_INDEX -1
 #define USER_STOP_INDEX -2
 

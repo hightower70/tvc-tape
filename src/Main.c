@@ -237,6 +237,10 @@ int wmain( int argc, wchar_t **argv )
 					case FT_TTP:
 						g_output_file_type = FT_CAS;
 						break;
+
+					case FT_COM:
+						g_output_file_type = FT_CAS;
+						break;
 				}
 			}
 			else
@@ -313,6 +317,12 @@ int wmain( int argc, wchar_t **argv )
 					success = (load_status == LS_Success);
 					break;
 
+				case FT_COM:
+					DisplayMessage(L"Processing COM input. Press <ESC> to stop.\n");
+					load_status = COMLoad();
+					success = (load_status == LS_Success);
+					break;
+
 				case FT_WaveInOut:
 					DisplayMessage(L"Processing audio input. Press <ESC> to stop.\n");
 					// set filter
@@ -340,7 +350,7 @@ int wmain( int argc, wchar_t **argv )
 		// load file from multi file containers
 		do
 		{
-			if(success && load_status == LS_Success)
+			if(success)
 			{
 				switch(g_input_file_type)
 				{
@@ -462,7 +472,7 @@ int wmain( int argc, wchar_t **argv )
 								wcscat(output_file_name, L"!");
 							}
 
-							// add extensnio and make it uniqie
+							// add extension and make it uniqie
 							AppendFileExtension(output_file_name, output_file_type);
 							GenerateUniqueFileName(output_file_name);
 							break;

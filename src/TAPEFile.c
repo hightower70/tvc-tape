@@ -180,6 +180,16 @@ LoadStatus TAPELoad(void)
 
 				case LS_Error:
 					DisplayFailedToLoad();
+					if(l_header_block_valid)
+					{
+						// zero remaining part of the buffer
+						while(g_db_buffer_index < g_db_buffer_length)
+							g_db_buffer[g_db_buffer_index++] = 0;
+
+						// flag as CRC and save partial file
+						g_db_crc_error_detected = true;
+						load_status = LS_Success;
+					}
 					break;
 
 				case LS_Success:
@@ -582,7 +592,6 @@ static LoadStatus DecoderRestart(void)
 
 	if(l_tape_reader_status == TRST_Data)
 	{
-		l_header_block_valid = false;
 		load_status = LS_Error;
 	}
 
