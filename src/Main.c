@@ -33,6 +33,7 @@
 #include "WaveFilter.h"
 #include "WaveLevelControl.h"
 #include "WaveFile.h"
+#include "COMPort.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Types
@@ -63,6 +64,8 @@ bool g_one_bit_wave_file = false;
 bool g_exclude_basic_program = false;
 WORD g_lomem_address = 6639;
 
+COMConfigType g_com_config;
+
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
 static FILE* l_output_file_name_list = NULL;
@@ -82,6 +85,7 @@ int wmain( int argc, wchar_t **argv )
 	// initialize
 	ConsoleInit();
 	BASInit();
+	COMInit();
 	g_output_wave_file[0] = '\0';
 	g_input_file_name[0] = '\0';
 	g_output_file_name[0] = '\0';
@@ -524,6 +528,11 @@ int wmain( int argc, wchar_t **argv )
 							DisplayMessageAndClearToLineEnd(L"Saving HEX file: %s", output_file_name);
 							success = HEXSave(output_file_name);
 							break;
+
+						case FT_COM:
+							DisplayMessageAndClearToLineEnd(L"Sending file over COM%d:", g_com_config.PortIndex);
+							success = COMSave(output_file_name);
+							break;
 					}
 
 					if(l_input_file_name_list == NULL)
@@ -851,6 +860,44 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 						l_input_file_name_list = _wfopen(argv[i], L"rt");
 						if(l_input_file_name_list == NULL)
 							success = false;
+					}
+					else
+					{
+						success = false;
+					}	
+					break;
+
+				case 'u':
+					if( i + 1 < argc )
+					{
+						wchar_t* param;
+						int index;
+									
+						index = 0;
+						param = wcstok(argv[++i], L",");
+						while (param != NULL)
+						{
+							switch(index)
+							{
+								// port index 
+								case 0:
+									g_com_config.PortIndex = _wtoi(param);
+									break;
+
+								// baud rate
+								case 1:
+									g_com_config.BaudRate = _wtoi(param);
+									break;
+
+								// tansfer length
+								case 2:
+									g_com_config.TransferLength = _wtoi(param);
+									break;
+							}
+
+							param = wcstok(NULL, L",");
+							index++;
+						}
 					}
 					else
 					{

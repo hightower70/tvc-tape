@@ -29,6 +29,7 @@ typedef enum
 	FT_TTP,				// Tape emulation file
 	FT_HEX,				// Intel HEX file
 	FT_BIN,				// Binary file
+	FT_COM,				// COM port
 	FT_WaveInOut,
 	FT_Dynamic // 
 } FileTypes;

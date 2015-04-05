@@ -87,6 +87,7 @@
     <ClCompile Include="src\BINFile.c" />
     <ClCompile Include="src\CASFile.c" />
     <ClCompile Include="src\CharMap.c" />
+    <ClCompile Include="src\COMPort.c" />
     <ClCompile Include="src\Console.c" />
     <ClCompile Include="src\CRC.c" />
     <ClCompile Include="src\DataBuffer.c" />
@@ -96,6 +97,7 @@
     <ClCompile Include="src\DDS.c" />
     <ClCompile Include="src\TAPEFile.c" />
     <ClCompile Include="src\TTPFile.c" />
+    <ClCompile Include="src\UARTDevice.c" />
     <ClCompile Include="src\WaveDevice.c" />
     <ClCompile Include="src\WaveFile.c" />
     <ClCompile Include="src\WaveFilter.c" />
@@ -114,9 +116,11 @@
     <ClInclude Include="inc\FileUtils.h" />
     <ClInclude Include="inc\HEXFile.h" />
     <ClInclude Include="inc\Main.h" />
+    <ClInclude Include="inc\COMPort.h" />
     <ClInclude Include="inc\TAPEFile.h" />
     <ClInclude Include="inc\TTPFile.h" />
     <ClInclude Include="inc\Types.h" />
+    <ClInclude Include="inc\UARTDevice.h" />
     <ClInclude Include="inc\WaveDevice.h" />
     <ClInclude Include="inc\WaveFile.h" />
     <ClInclude Include="inc\WaveFilter.h" />

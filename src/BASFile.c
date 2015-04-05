@@ -148,6 +148,10 @@ LoadStatus BASLoad(wchar_t* in_file_name)
 			{
 				encoding = TET_UNICODE;
 			}
+			else
+			{
+				encoding = TET_ANSI;
+			}
 		}
 	}
 

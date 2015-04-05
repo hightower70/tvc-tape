@@ -262,21 +262,28 @@ FileTypes DetermineFileType(wchar_t* in_file_name)
 	}
 	else
 	{
-		// determine file type by extension
-		input_file_name_extension = wcsrchr(in_file_name, '.');
-
-		if(input_file_name_extension != NULL)
+		if(StringStartsWith(in_file_name, L"com:"))
 		{
-			i = 0;
-			while(l_file_extensions[i].Extension != NULL)
+			return FT_COM;
+		}
+		else
+		{
+			// determine file type by extension
+			input_file_name_extension = wcsrchr(in_file_name, '.');
+
+			if(input_file_name_extension != NULL)
 			{
-				if(_wcsicmp(input_file_name_extension, l_file_extensions[i].Extension ) == 0)
-					return l_file_extensions[i].Type;
+				i = 0;
+				while(l_file_extensions[i].Extension != NULL)
+				{
+					if(_wcsicmp(input_file_name_extension, l_file_extensions[i].Extension ) == 0)
+						return l_file_extensions[i].Type;
 
-				i++;
+					i++;
+				}
+
+				return FT_Unknown;
 			}
-
-			return FT_Unknown;
 		}
 	}
 
