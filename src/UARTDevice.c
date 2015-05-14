@@ -19,7 +19,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
 static HANDLE l_uart_handle = INVALID_HANDLE_VALUE;
-																																							 
+										
+///////////////////////////////////////////////////////////////////////////////
+// Opens UART, returns true if success
 bool UARTOpen(COMConfigType* in_config)
 {
   BOOL success = TRUE;
@@ -68,7 +70,8 @@ bool UARTOpen(COMConfigType* in_config)
 	return success;
 }
 
-//
+///////////////////////////////////////////////////////////////////////////////
+// Sends block of data to the uart
 void UARTSendBlock(BYTE* in_buffer, DWORD in_buffer_length)
 {
 	DWORD bytes_written;
@@ -76,6 +79,8 @@ void UARTSendBlock(BYTE* in_buffer, DWORD in_buffer_length)
 	WriteFile( l_uart_handle, in_buffer, in_buffer_length, &bytes_written, NULL);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Receives blocks of data from the uart
 DWORD UARTReceiveBlock(BYTE* in_buffer, DWORD in_buffer_length, DWORD* out_bytes_received)
 {
 	SHORT s;
@@ -89,6 +94,8 @@ DWORD UARTReceiveBlock(BYTE* in_buffer, DWORD in_buffer_length, DWORD* out_bytes
 	return ( s != 0);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Coses uart
 void UARTClose(void)
 {
 	if(l_uart_handle != INVALID_HANDLE_VALUE)

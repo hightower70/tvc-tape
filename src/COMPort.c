@@ -16,6 +16,7 @@
 #include "Main.h"
 #include "DataBuffer.h"
 #include "CASFile.h"
+#include "Console.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -52,19 +53,48 @@ bool COMSave(wchar_t* in_tape_file_name)
 {
 	bool success = true;
 	CASProgramFileHeaderType cas_program_header;
+	int block_start_pos;
+	int current_block_length;
+	SHORT s;
 
 	CASInitHeader(&cas_program_header);
 
+	// open uart
 	if( UARTOpen(&g_com_config) )
 	{
+		// send header block
 		UARTSendBlock((BYTE*)&cas_program_header, sizeof(cas_program_header));
-		UARTSendBlock((BYTE*)&g_db_buffer, g_db_buffer_length);
+
+		// send datatv blocks
+		block_start_pos = 0;
+		while(block_start_pos < g_db_buffer_length && success)
+		{
+			// determine block length
+			current_block_length = g_db_buffer_length - block_start_pos;
+			if(current_block_length > 16)
+				current_block_length = 16;
+
+			// display status
+			DisplayProgressBar(L"Data sent", block_start_pos + current_block_length, g_db_buffer_length);
+
+			// send data
+			UARTSendBlock((BYTE*)&g_db_buffer[block_start_pos], current_block_length);
+
+			// next block
+			block_start_pos += current_block_length;
+
+			// check for cancel key
+			s = GetAsyncKeyState(STOP_KEY);
+			if( s != 0)
+				success = false;
+		}
 	}
 	else
 	{
 		success = false;
 	}
 
+	// close uart
 	UARTClose();
 
 	return success;

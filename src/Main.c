@@ -540,7 +540,7 @@ int wmain( int argc, wchar_t **argv )
 							break;
 
 						case FT_COM:
-							DisplayMessageAndClearToLineEnd(L"Sending file over COM%d:", g_com_config.PortIndex);
+							DisplayMessage(L"Sending file over 'COM%d:'. Press <ESC> to stop.\n", g_com_config.PortIndex);
 							success = COMSave(output_file_name);
 							break;
 					}
