@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Tvc-tape : Automatically exported from code.google.com/p/tvc-tape">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Tvc-tape</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/hightower70/tvc-tape">View on GitHub</a>
+
+          <h1 id="project_title">Tvc-tape</h1>
+          <h2 id="project_tagline">Automatically exported from code.google.com/p/tvc-tape</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/hightower70/tvc-tape/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/hightower70/tvc-tape/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="tvctape" class="anchor" href="#tvctape" aria-hidden="true"><span class="octicon octicon-link"></span></a>TVCTape</h1>
+
+<p>Version: 0.1</p>
+
+<p>The TVCTape converts between various tape file format of a vintage 8-bit computer, manufactured by Videoton in Hungary in late eighties. 
+The program can handle frequency modulated audio signal in real time in both direction. This program can be used for direct data transfer between PC and TV Computer using audio connection on the PC and tape connector on the TVC. </p>
+
+<p>A following file formats are supported: <em>Wave In</em>, <em>Wave Out</em>, <em>WAV</em>, <em>CAS</em>, <em>BAS</em>, <em>TTP</em>, <em>BIN</em>, <em>HEX</em></p>
+
+<h2>
+<a id="wave-inwav-file-reading" class="anchor" href="#wave-inwav-file-reading" aria-hidden="true"><span class="octicon octicon-link"></span></a>Wave In/WAV file reading</h2>
+
+<p>The main goal of this software was to recover vintage programs stored on cassette tape. The tapes are severely degraded in the last few decades so some preprocessing is needed before the content can be decoded.
+The first stage contains a digital pass-band filter.  There are two filter implemented, both has 1-3kHz band-pass range. One filter is a fast IIR filter with relatively wide roll-off range (this is the default for real time Wave In processing) the other filter is a slow FIR filter with narrow roll-off range, used for WAV file processing.  The filters can be changed by using <em>‘-p’</em> command line switch.
+A filtered signal is transferred to a intelligent signal limiter/gain control unit. This is intelligent because it receives information from the decoder about the appropriate signal presence. When no signal detected it only limits the amplitude of the signal, when an appropriate signal is detected (after a few periods on leading signal) it changes to gain control mode, when amplification is automatically applied when needed. The preprocessed signal can be saved to WAV file by using <em>‘-w’</em> switch for further processing.
+A filtered signal goes to the demodulator, where several methods used for processing the still low quality signal. It continuously adopts the internal timing to follow the speed changes of the tape, there is 128 times oversampling for the more accurate period length measurement, and the phase and position of the sync period is determined by a voting algorithm. 
+The demodulated signal is further processed by the decoder. It generates the binary content from the incoming bit-stream. The CRC is calculated and checked, however in the case of mismatched CRCs the file is still saved (with an appended exclamation mark to the file name). So in the case of one or few bits error the content still can be recovered.
+The TVCTape always uses the default Wave In device for signal source and the signal level must be adjusted until the yellow signal level marker just lit. It only accepts the 44.1kHz, 8 or 16 bits, PCM encoded WAV files.</p>
+
+<h2>
+<a id="wave-outwav-file-saving" class="anchor" href="#wave-outwav-file-saving" aria-hidden="true"><span class="octicon octicon-link"></span></a>Wave Out/WAV file saving</h2>
+
+<p>The ‘TVCTape’ is capable of generating the frequency modulated signal used for cassette data storage. For generating the signal it uses DDS (Direct Digital Synthesis) algorithm, so the important parameters of the generated signal can be changed. Using the <em>‘-g’</em> switch the generated signal’s frequency can be shifted so a simple “turbo” loader can be implemented.
+The program always uses the default Wave Out device. usually the volume must be at maximum in order to be processed by a real TVC. For WAV file it always uses 8 bit, 44.1kHz, PCM format.</p>
+
+<h2>
+<a id="cas-file" class="anchor" href="#cas-file" aria-hidden="true"><span class="octicon octicon-link"></span></a>CAS file</h2>
+
+<p>This is the commonly used file format for storing programs on TVC. The TVCTape can only process CAS files which contains programs (data file processing might be added later). using the <em>‘-a’</em> and <em>‘-c’</em> switches the default values of the ‘autostart’ and ‘copyprotect’ flags can be altered respectively. </p>
+
+<h2>
+<a id="bas-file" class="anchor" href="#bas-file" aria-hidden="true"><span class="octicon octicon-link"></span></a>BAS file</h2>
+
+<p>The BAS file is a text file which contains BASIC program for the TVC. The file is processed according the TVC’s tokenizing rules. Because of the accented characters the file can be encoded in ANSII, UNICODE or UTF8. This can be controlled by the <em>‘-b’</em> switch. If there is a binary data after the BASIC program (which is usually the case in the assembly programs) the binary part is saved as well using ‘BYTES’ directive and hex data format. </p>
+
+<h2>
+<a id="ttp-file" class="anchor" href="#ttp-file" aria-hidden="true"><span class="octicon octicon-link"></span></a>TTP file</h2>
+
+<p>This file format is generally used by the TVC emulators. This can be store more than one program file and can be loaded sequentially into the emulator as it comes from the tape. Using multiple files is easier by applying the <em>‘-l’</em> or <em>‘-s’</em> switches. The <em>‘-s’</em> switch saves the list of the processed file names into the given text file, while <em>‘-l’</em> loads the list of the files to be process from a text file specified by the switch.</p>
+
+<h2>
+<a id="bin-file" class="anchor" href="#bin-file" aria-hidden="true"><span class="octicon octicon-link"></span></a>BIN file</h2>
+
+<p>This contains the pure binary content of any TVC program file without special header and file information. Using <em>‘-e’</em> switch even the BASIC starter lines can be omitted.</p>
+
+<h2>
+<a id="hex-file" class="anchor" href="#hex-file" aria-hidden="true"><span class="octicon octicon-link"></span></a>HEX file</h2>
+
+<p>Similar to the BIN file but the data is stored in Intel HEX file instead of the binary format. The <em>‘-e’</em> switch can be used as well and there is an <em>‘-m’</em> switch to change the memory start address stored in the hex file.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Tvc-tape maintained by <a href="https://github.com/hightower70">hightower70</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
