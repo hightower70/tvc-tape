@@ -18,9 +18,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 void CRCReset(void);
-WORD CRCGet(void);
-WORD CRCAddByte(BYTE in_data);
-WORD CRCAddBlock(BYTE* in_buffer, int in_buffer_length);
+uint16_t CRCGet(void);
+uint16_t CRCAddByte(uint8_t in_data);
+uint16_t CRCAddBlock(uint8_t* in_buffer, int in_buffer_length);
 
 
 #endif

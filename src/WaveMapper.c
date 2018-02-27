@@ -40,7 +40,7 @@ bool WMOpenInput(wchar_t* in_file_name)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Reads next sample
-bool WMReadSample(INT32* out_sample)
+bool WMReadSample(int32_t* out_sample)
 {
 	switch(g_input_file_type)
 	{
@@ -99,7 +99,7 @@ bool WMOpenOutput(wchar_t* in_file_name)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Write output sample
-bool WMWriteSample(BYTE in_sample)
+bool WMWriteSample(uint8_t in_sample)
 {
 	switch(g_output_file_type)
 	{

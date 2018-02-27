@@ -17,8 +17,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
-static DWORD l_dds_accumulator = 0;
-static DWORD l_dds_increment = 0;
+static uint32_t l_dds_accumulator = 0;
+static uint32_t l_dds_increment = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Initialize DDS
@@ -29,7 +29,7 @@ void InitDDS(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Sine table
-static BYTE l_sine_table[DDS_TABLE_LENGTH] = 
+static uint8_t l_sine_table[DDS_TABLE_LENGTH] = 
 {
 	0x80, 0x83, 0x86, 0x89, 0x8C, 0x8F, 0x92, 0x95,
 	0x97, 0x9A, 0x9D, 0xA0, 0xA3, 0xA6, 0xA8, 0xAB,
@@ -67,18 +67,18 @@ static BYTE l_sine_table[DDS_TABLE_LENGTH] =
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generate signal
-bool GenerateDDSSignal(DWORD in_frequency, DWORD in_cycle_count)
+bool GenerateDDSSignal(uint32_t in_frequency, uint32_t in_cycle_count)
 {
-	BYTE sample;
-	DWORD prev_accumulator;
-	DWORD dds_increment;
+	uint8_t sample;
+	uint32_t prev_accumulator;
+	uint32_t dds_increment;
 	bool success = true;
 	
-	dds_increment = (DWORD)(((__int64)in_frequency * MAX_DWORD) / SAMPLE_RATE);
+	dds_increment = (uint32_t)(((int64_t)in_frequency * INT32_MAX) / SAMPLE_RATE);
 
 	while(in_cycle_count > 0 && success)
 	{
-		sample = l_sine_table[(BYTE)(l_dds_accumulator >> 24)];
+		sample = l_sine_table[(uint8_t)(l_dds_accumulator >> 24)];
 
 		prev_accumulator = l_dds_accumulator;
 		l_dds_accumulator += dds_increment;
@@ -94,9 +94,9 @@ bool GenerateDDSSignal(DWORD in_frequency, DWORD in_cycle_count)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generate silence
-bool GenerateDDSSilence(WORD in_length_in_ms)
+bool GenerateDDSSilence(uint16_t in_length_in_ms)
 {
-	DWORD sample_count = (DWORD)in_length_in_ms * SAMPLE_RATE / 1000;
+	uint32_t sample_count = (uint32_t)in_length_in_ms * SAMPLE_RATE / 1000;
 	bool success = true;
 	
 	while(sample_count > 0 && success)

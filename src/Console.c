@@ -100,7 +100,7 @@ void DisplayMessageAndClearToLineEnd(const wchar_t* format, ...)
 void PrintLogo(void)
 {
 	if(g_output_message)
-		fwprintf(stderr, L"TVCTape v0.1 (c)2013-2015 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
+		fwprintf(stderr, L"TVCTape v0.2 (c)2013-2015 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -128,7 +128,7 @@ void DisplayProgressBar(wchar_t* in_title, int in_value, int in_max_value)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Displays signal level indicator
-void DisplaySignalLevel(INT32 in_peak_level, bool in_cpu_overload, const wchar_t* in_format, ...)
+void DisplaySignalLevel(int32_t in_peak_level, bool in_cpu_overload, const wchar_t* in_format, ...)
 {
 	static int prev_peak_pos = 0;
 	int peak_pos;
@@ -230,7 +230,7 @@ void PrintHelp(void)
 	{
 		fwprintf(stderr,
 			L"TVCTape is a free software for converting between Videoton TV Computer\n"
-			L"CAS, BAS and Tape audio data format.\n\n"
+			L"various program file formats.\n\n"
 			L" Usage:  TVCTape [options] file1 [file2]\n\n"
 			L"  -q           quiet (no screen output, only errors)\n"
 			L"  -h           display this help\n"
@@ -272,15 +272,22 @@ void PrintHelp(void)
 			L"     p - parity (n - none (default), o - odd, e - even)\n"
 			L"     s - stop bit count (1(default) or 2)\n"
 			L"     h - handshake (n - none(default), h - hardware)\n"
+			L"  -r n - CART ROM loader type (n - 0-1\n"
+			L"     0 - Uncompresed file loader (default)\n"
+			L"     1 - ZX7 compressed file\n"
+			L"     2 - Uncompresed file loader with border coloring\n"
+			L"     3 - ZX7 compressed file with border coloring\n"
 			L"\n"
 			L"  - 'file1' and 'file2' can be 'CAS', 'BAS', 'TTP', 'BIN', 'HEX' (Intel),\n"
-			L"     'WAV' (PCM), 'WAVE:' (wave in/out device). 'COM:' (serial port)\n"
+			L"     ROM (Cart), 'WAV' (PCM), 'WAVE:' (wave in/out device),\n"
+			L"     'COM:' (serial port)\n"
 			L" If two files are specified then it converts from file1->file2.\n"
 			L" If only one file is specified, operation depends on the specified file type:\n"
 			L"  CAS: Converts to WAV with the same name\n"
 			L"  WAV: Converts to one or more CAS files\n"
 			L"  BAS: Converts to CAS file with the same name\n"
 			L"  WAVE: Converts signal from WaveIn to one or more CAS files\n"
+			L"  COM: Converts data from serial (COM) port to CAS file\n"
 			L"\n"
 			L" Examples:\n"
 			L"  TVCTape WAVE:              Converts tape signal coming from the default\n"

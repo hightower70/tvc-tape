@@ -27,7 +27,7 @@ typedef enum
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-INT32 WFProcessSample(INT32 in_new_sample);
+int32_t WFProcessSample(int32_t in_new_sample);
 extern FilterTypes g_filter_type;
 
 #endif

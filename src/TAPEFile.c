@@ -69,58 +69,58 @@ typedef enum
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-static bool EncodeByte(BYTE in_data);
+static bool EncodeByte(uint8_t in_data);
 static bool EncodeBlockLeading(void);
-static bool EncodeBlock(BYTE* in_buffer, int in_length);
+static bool EncodeBlock(uint8_t* in_buffer, int in_length);
 static void DisplayOutputHeaderProgress(int in_pos, int in_max_pos);
 static void DisplayOutputDataProgress(int in_pos, int in_max_pos);
 static void DisplayInputDataProgress(void);
 static void DisplayFailedToLoad(void);
-static LoadStatus DecodeSample(INT32 in_sample);
+static LoadStatus DecodeSample(int32_t in_sample);
 static LoadStatus DecoderRestart(void);
-static void UpdateMiddleFrequency(DWORD in_frequency, DWORD in_measured_period_length);
-static LoadStatus StoreByte(BYTE in_data_byte);
+static void UpdateMiddleFrequency(uint32_t in_frequency, uint32_t in_measured_period_length);
+static LoadStatus StoreByte(uint8_t in_data_byte);
 static int IntABS(int in_value);
-static bool StoreByteInStruct(BYTE in_data_byte, void* in_struct, size_t in_size, bool in_add_to_crc);
-static void SetSectorLength(BYTE in_sector_length);
+static bool StoreByteInStruct(uint8_t in_data_byte, void* in_struct, size_t in_size, bool in_add_to_crc);
+static void SetSectorLength(uint8_t in_sector_length);
 static void ChangeReaderStatus(TapeReaderStatusType in_new_status);
-static WORD OffsetFrequency(WORD in_frequency);
+static uint16_t OffsetFrequency(uint16_t in_frequency);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
 
 // encoder variables
-static BYTE l_prev_input_percentage;
-static DWORD l_prev_input_total_seconds;
+static uint8_t l_prev_input_percentage;
+static uint32_t l_prev_input_total_seconds;
 
 // decoder variables
-static BYTE l_data_byte;
-static DWORD l_data_byte_index;
-static BYTE l_bit_counter;
+static uint8_t l_data_byte;
+static uint32_t l_data_byte_index;
+static uint8_t l_bit_counter;
 static DecoderStateType l_decoder_state = DST_Idle;
 static TapeReaderStatusType l_tape_reader_status = TRST_Idle;
 static SignalPhaseType l_current_phase = SPT_Low;
 static SignalPhaseType l_phase_mode = SPT_Low;
 
-static INT32 l_previous_sample;
+static int32_t l_previous_sample;
 static int l_period_high_length;
 static int l_period_low_length;
 static int l_sync_first_half_period_length;
 static int l_sync_second_half_period_length;
 
 static int l_middle_period_buffer[MIDDLE_PERIOD_BUFFER_LENGTH];	// buffer used for middle frequency (period) avg. calculation
-static DWORD l_middle_period_buffer_index;
-static WORD l_middle_period;
-static DWORD l_middle_period_sum;
+static uint32_t l_middle_period_buffer_index;
+static uint16_t l_middle_period;
+static uint32_t l_middle_period_sum;
 
 static TAPEBlockHeaderType l_block_header;
 static TAPESectorHeaderType l_sector_header;
-static BYTE l_file_name_length;
+static uint8_t l_file_name_length;
 static CASProgramFileHeaderType l_program_header;
 static TAPESectorEndType l_sector_end;
-static WORD l_current_sector_length;
-static WORD l_sector_end_period_count;
-static DWORD l_sync_period_length;
+static uint16_t l_current_sector_length;
+static uint16_t l_sector_end_period_count;
+static uint32_t l_sync_period_length;
 static bool l_header_block_valid;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -128,9 +128,9 @@ static bool l_header_block_valid;
 
 static int l_demod_sample_index = 0;  // for debugging only (will be removed)
 
-WORD g_frequency_offset = 0;
-WORD g_leading_length = 4812;
-WORD g_gap_length = 1000;
+uint16_t g_frequency_offset = 0;
+uint16_t g_leading_length = 4812;
+uint16_t g_gap_length = 1000;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Initialization of tape functions
@@ -156,7 +156,7 @@ bool TAPEOpenInput(wchar_t* in_file_name)
 LoadStatus TAPELoad(void)
 {
 	bool success = true;
-	INT32	sample;
+	int32_t	sample;
 	LoadStatus load_status = LS_Unknown;
 
 	// scan for files
@@ -241,8 +241,8 @@ bool TAPESave(wchar_t* in_file_name)
 	TAPESectorHeaderType tape_sector_header;
 	CASProgramFileHeaderType cas_program_header;
 	TAPESectorEndType tape_sector_end;
-	BYTE sector_count;
-	BYTE sector_index;
+	uint8_t sector_count;
+	uint8_t sector_index;
 	int sector_size;
 	int tape_file_name_length;
 	bool success = true;
@@ -261,18 +261,18 @@ bool TAPESave(wchar_t* in_file_name)
 	if(success)
 	{
 		CRCReset();
-		CRCAddBlock(((BYTE*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
-		success = EncodeBlock((BYTE*)&tape_block_header, sizeof(tape_block_header));
+		CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
+		success = EncodeBlock((uint8_t*)&tape_block_header, sizeof(tape_block_header));
 	}
 
 	// header block sector start
 	tape_file_name_length							= strlen(g_db_file_name);
 	tape_sector_header.SectorNumber		= 0;
-	tape_sector_header.BytesInSector	= (BYTE)(sizeof(BYTE) + tape_file_name_length + sizeof(cas_program_header));
+	tape_sector_header.BytesInSector	= (uint8_t)(sizeof(uint8_t) + tape_file_name_length + sizeof(cas_program_header));
 
-	CRCAddBlock(((BYTE*)&tape_sector_header), sizeof(tape_sector_header));
+	CRCAddBlock(((uint8_t*)&tape_sector_header), sizeof(tape_sector_header));
 	if(success)
-		success = EncodeBlock((BYTE*)&tape_sector_header, sizeof(tape_sector_header));
+		success = EncodeBlock((uint8_t*)&tape_sector_header, sizeof(tape_sector_header));
 
 	// write tape file name
 	if(success)
@@ -283,16 +283,16 @@ bool TAPESave(wchar_t* in_file_name)
 
 	if(success)
 	{
-		CRCAddBlock((BYTE*)&g_db_file_name, tape_file_name_length);
-		success = EncodeBlock((BYTE*)&g_db_file_name, tape_file_name_length);
+		CRCAddBlock((uint8_t*)&g_db_file_name, tape_file_name_length);
+		success = EncodeBlock((uint8_t*)&g_db_file_name, tape_file_name_length);
 	}
 
 	// write program header
 	if(success)
 	{
 		CASInitHeader(&cas_program_header);
-		CRCAddBlock((BYTE*)&cas_program_header, sizeof(cas_program_header));
-		success = EncodeBlock((BYTE*)&cas_program_header, sizeof(cas_program_header));
+		CRCAddBlock((uint8_t*)&cas_program_header, sizeof(cas_program_header));
+		success = EncodeBlock((uint8_t*)&cas_program_header, sizeof(cas_program_header));
 	}
 
 	// write sector end
@@ -302,7 +302,7 @@ bool TAPESave(wchar_t* in_file_name)
 	tape_sector_end.CRC = CRCGet();
 
 	if(success)
-		success = EncodeBlock((BYTE*)&tape_sector_end, sizeof(tape_sector_end));
+		success = EncodeBlock((uint8_t*)&tape_sector_end, sizeof(tape_sector_end));
 	DisplayOutputHeaderProgress(10, 10);
 
 	// closing header block
@@ -326,8 +326,8 @@ bool TAPESave(wchar_t* in_file_name)
 	{
 		TAPEInitBlockHeader(&tape_block_header);
 		CRCReset();
-		CRCAddBlock(((BYTE*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
-		success = EncodeBlock((BYTE*)&tape_block_header, sizeof(tape_block_header));
+		CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
+		success = EncodeBlock((uint8_t*)&tape_block_header, sizeof(tape_block_header));
 	}
 
 	while(sector_index <= sector_count && success)
@@ -344,19 +344,19 @@ bool TAPESave(wchar_t* in_file_name)
 		DisplayOutputDataProgress((sector_index-1)*256 + sector_size, g_db_buffer_length);
 
 		tape_sector_header.SectorNumber		= sector_index;
-		tape_sector_header.BytesInSector	= (sector_size > 255)? 0 : (BYTE)sector_size;
+		tape_sector_header.BytesInSector	= (sector_size > 255)? 0 : (uint8_t)sector_size;
 
 		if(success)
 		{
-			CRCAddBlock((BYTE*)&tape_sector_header, sizeof(tape_sector_header));
-			success = EncodeBlock((BYTE*)&tape_sector_header, sizeof(tape_sector_header));
+			CRCAddBlock((uint8_t*)&tape_sector_header, sizeof(tape_sector_header));
+			success = EncodeBlock((uint8_t*)&tape_sector_header, sizeof(tape_sector_header));
 		}
 
 		// sector data
 		if(success)
 		{
-			CRCAddBlock((BYTE*)&g_db_buffer[(sector_index-1)*256], sector_size);
-			success = EncodeBlock((BYTE*)&g_db_buffer[(sector_index-1)*256], sector_size);
+			CRCAddBlock((uint8_t*)&g_db_buffer[(sector_index-1)*256], sector_size);
+			success = EncodeBlock((uint8_t*)&g_db_buffer[(sector_index-1)*256], sector_size);
 		}
 
 		// sector end
@@ -366,7 +366,7 @@ bool TAPESave(wchar_t* in_file_name)
 		tape_sector_end.CRC = CRCGet();
 
 		if(success)
-			success = EncodeBlock((BYTE*)&tape_sector_end, sizeof(tape_sector_end));
+			success = EncodeBlock((uint8_t*)&tape_sector_end, sizeof(tape_sector_end));
 
 		CRCReset();
 		sector_index++;
@@ -440,12 +440,12 @@ static void DisplayOutputDataProgress(int in_pos, int in_max_pos)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Offsetting frequency
-static WORD OffsetFrequency(WORD in_frequency)
+static uint16_t OffsetFrequency(uint16_t in_frequency)
 {
 	if(g_frequency_offset == 0)
 		return in_frequency;
 
-	return (WORD)((DWORD)in_frequency * (100 + g_frequency_offset) / 100);
+	return (uint16_t)((uint32_t)in_frequency * (100 + g_frequency_offset) / 100);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -453,7 +453,7 @@ static WORD OffsetFrequency(WORD in_frequency)
 static bool EncodeBlockLeading(void)
 {
 	bool success;
-	WORD period_count = (WORD)((((DWORD)OffsetFrequency(FREQ_LEADING)) * g_leading_length + 500 ) / 1000);
+	uint16_t period_count = (uint16_t)((((uint32_t)OffsetFrequency(FREQ_LEADING)) * g_leading_length + 500 ) / 1000);
 
 	success = GenerateDDSSilence(g_gap_length);
 
@@ -470,7 +470,7 @@ static bool EncodeBlockLeading(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Encodes one byte
-static bool EncodeByte(BYTE in_data)
+static bool EncodeByte(uint8_t in_data)
 {
 	int i;
 	bool success = true;
@@ -494,7 +494,7 @@ static bool EncodeByte(BYTE in_data)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Encodes several bytes
-static bool EncodeBlock(BYTE* in_buffer, int in_length)
+static bool EncodeBlock(uint8_t* in_buffer, int in_length)
 {
 	bool success = true;
 	while(in_length > 0 && success)
@@ -522,9 +522,9 @@ static void DisplayFailedToLoad(void)
 // Displays input status message
 static void DisplayInputDataProgress(void)
 {
-	BYTE percentage;
-	DWORD total_seconds;
-	WORD hour, minutes, seconds;
+	uint8_t percentage;
+	uint32_t total_seconds;
+	uint16_t hour, minutes, seconds;
 	wchar_t buffer[DB_MAX_FILENAME_LENGTH+1];
 
 	switch(g_input_file_type)
@@ -533,15 +533,15 @@ static void DisplayInputDataProgress(void)
 			if(g_input_wav_file_sample_count != 0)
 			{
 				// calculate percentage
-				percentage = (BYTE)((DDWORD)g_input_wav_file_sample_index * 100 / g_input_wav_file_sample_count);
+				percentage = (uint8_t)((uint64_t)g_input_wav_file_sample_index * 100 / g_input_wav_file_sample_count);
 				total_seconds = g_input_wav_file_sample_index / SAMPLE_RATE;
 
 				// calculate time
-				hour = (WORD)(total_seconds / (60 * 60));
-				total_seconds -= (WORD)(hour * (60 * 60));
-				minutes = (WORD)(total_seconds / 60);
+				hour = (uint16_t)(total_seconds / (60 * 60));
+				total_seconds -= (uint16_t)(hour * (60 * 60));
+				minutes = (uint16_t)(total_seconds / 60);
 				total_seconds -= minutes * 60;
-				seconds = (WORD)total_seconds;
+				seconds = (uint16_t)total_seconds;
 
 				if(percentage != l_prev_input_percentage || total_seconds != l_prev_input_total_seconds)
 				{
@@ -605,9 +605,9 @@ static LoadStatus DecoderRestart(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Process one sample
-static LoadStatus DecodeSample(INT32 in_sample)
+static LoadStatus DecodeSample(int32_t in_sample)
 {
-	DWORD period_length;
+	uint32_t period_length;
 	int high_period_length;
 	int low_period_length;
 	int oversampled_length;
@@ -675,8 +675,8 @@ static LoadStatus DecodeSample(INT32 in_sample)
 			// waiting for leading signal
 			case DST_WaitingForLeading:
 			{
-				DWORD leading_min = PERIOD_LEADING - (PERIOD_LEADING * LEADING_FREQUENCY_TOLERANCE + 50) / 100;
-				DWORD leading_max = PERIOD_LEADING + (PERIOD_LEADING * LEADING_FREQUENCY_TOLERANCE + 50) / 100;
+				uint32_t leading_min = PERIOD_LEADING - (PERIOD_LEADING * LEADING_FREQUENCY_TOLERANCE + 50) / 100;
+				uint32_t leading_max = PERIOD_LEADING + (PERIOD_LEADING * LEADING_FREQUENCY_TOLERANCE + 50) / 100;
 
 				// check for leading frequency
 				if(period_length >= leading_min && period_length <= leading_max)
@@ -701,11 +701,11 @@ static LoadStatus DecodeSample(INT32 in_sample)
 			// waiting for sync signal
 			case DST_WaitingForSync:
 				{
-					DWORD leading_min = PERIOD_LEADING - (PERIOD_LEADING * LEADING_FREQUENCY_TOLERANCE + 50) / 100;
-					DWORD leading_max = PERIOD_LEADING + (PERIOD_LEADING * LEADING_FREQUENCY_TOLERANCE + 50) / 100;
-					DWORD expected_sync_period = (FREQ_MIDDLE * l_middle_period + FREQ_SYNC / 2) / FREQ_SYNC;
-					DWORD sync_min = expected_sync_period - (PERIOD_SYNC * SYNC_FREQUENCY_TOLERANCE + 50) / 100;
-					DWORD sync_max = expected_sync_period + (PERIOD_SYNC * SYNC_FREQUENCY_TOLERANCE + 50) / 100;
+					uint32_t leading_min = PERIOD_LEADING - (PERIOD_LEADING * LEADING_FREQUENCY_TOLERANCE + 50) / 100;
+					uint32_t leading_max = PERIOD_LEADING + (PERIOD_LEADING * LEADING_FREQUENCY_TOLERANCE + 50) / 100;
+					uint32_t expected_sync_period = (FREQ_MIDDLE * l_middle_period + FREQ_SYNC / 2) / FREQ_SYNC;
+					uint32_t sync_min = expected_sync_period - (PERIOD_SYNC * SYNC_FREQUENCY_TOLERANCE + 50) / 100;
+					uint32_t sync_max = expected_sync_period + (PERIOD_SYNC * SYNC_FREQUENCY_TOLERANCE + 50) / 100;
 
 					// check for leading frequency
 					if(period_length >= leading_min && period_length <= leading_max)
@@ -745,12 +745,12 @@ static LoadStatus DecodeSample(INT32 in_sample)
 			//	Sync period length detected
 			case DST_SyncDetected:
 				{
-					DWORD expected_sync_half_period = (FREQ_MIDDLE * l_middle_period / FREQ_SYNC + 1) / 2;
-					DWORD expected_leading_half_period = (FREQ_MIDDLE * l_middle_period / FREQ_LEADING + 1) / 2;
-					DWORD expected_zero_half_period = (FREQ_MIDDLE * l_middle_period / FREQ_ZERO + 1) / 2;
-					DWORD sync_third_half_period_length;
-					BYTE first_score;
-					BYTE second_score;
+					uint32_t expected_sync_half_period = (FREQ_MIDDLE * l_middle_period / FREQ_SYNC + 1) / 2;
+					uint32_t expected_leading_half_period = (FREQ_MIDDLE * l_middle_period / FREQ_LEADING + 1) / 2;
+					uint32_t expected_zero_half_period = (FREQ_MIDDLE * l_middle_period / FREQ_ZERO + 1) / 2;
+					uint32_t sync_third_half_period_length;
+					uint8_t first_score;
+					uint8_t second_score;
 
 					// determine second and third half period length
 					switch(current_phase)
@@ -878,7 +878,7 @@ static int IntABS(int in_value)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Stores data byte readed by the decoder
-static LoadStatus StoreByte(BYTE in_data_byte)
+static LoadStatus StoreByte(uint8_t in_data_byte)
 {
 	LoadStatus load_status = LS_Unknown;
 
@@ -902,7 +902,7 @@ static LoadStatus StoreByte(BYTE in_data_byte)
 					g_db_buffer_index = 0;
 					g_db_crc_error_detected = false;
 					CRCReset();
-					CRCAddBlock(((BYTE*)&l_block_header + 1), sizeof(l_block_header)-1);
+					CRCAddBlock(((uint8_t*)&l_block_header + 1), sizeof(l_block_header)-1);
 				}
 				else
 				{
@@ -1094,12 +1094,12 @@ static void ChangeReaderStatus(TapeReaderStatusType in_new_status)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Stores received byte in a struct
-static bool StoreByteInStruct(BYTE in_data_byte, void* in_struct, size_t in_size, bool in_add_to_crc)
+static bool StoreByteInStruct(uint8_t in_data_byte, void* in_struct, size_t in_size, bool in_add_to_crc)
 {
 	if( l_data_byte_index < in_size)
 	{
 		// store byte
-		*((BYTE*)in_struct + l_data_byte_index) = in_data_byte;
+		*((uint8_t*)in_struct + l_data_byte_index) = in_data_byte;
 		l_data_byte_index++;
 
 		// add to CRC
@@ -1115,7 +1115,7 @@ static bool StoreByteInStruct(BYTE in_data_byte, void* in_struct, size_t in_size
 
 ///////////////////////////////////////////////////////////////////////////////
 // Sets sector length
-static void SetSectorLength(BYTE in_sector_length)
+static void SetSectorLength(uint8_t in_sector_length)
 {
 	if(in_sector_length == 0)
 		l_current_sector_length = 256;
@@ -1125,7 +1125,7 @@ static void SetSectorLength(BYTE in_sector_length)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Updates middle frequency period length
-static void UpdateMiddleFrequency(DWORD in_frequency, DWORD in_measured_period_length)
+static void UpdateMiddleFrequency(uint32_t in_frequency, uint32_t in_measured_period_length)
 {
 	int frequency_to_remove = l_middle_period_buffer[l_middle_period_buffer_index];
 	int middle_period_length = (in_measured_period_length * in_frequency + FREQ_MIDDLE / 2) / FREQ_MIDDLE;
@@ -1137,5 +1137,5 @@ static void UpdateMiddleFrequency(DWORD in_frequency, DWORD in_measured_period_l
 		l_middle_period_buffer_index = 0;
 
 	l_middle_period_sum = l_middle_period_sum - frequency_to_remove + middle_period_length;
-	l_middle_period = (WORD)(l_middle_period_sum / MIDDLE_PERIOD_BUFFER_LENGTH);
+	l_middle_period = (uint16_t)(l_middle_period_sum / MIDDLE_PERIOD_BUFFER_LENGTH);
 }

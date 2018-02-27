@@ -12,6 +12,7 @@
 #define __Types_h
 
 #include <wchar.h>
+#include <stdint.h>
 
 // bool type
 #ifndef bool
@@ -29,18 +30,6 @@ typedef unsigned char	bool;	// always 8 bit
 #ifndef NULL
 #define NULL 0
 #endif
-
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
-typedef unsigned long DWORD;
-typedef unsigned __int64 DDWORD;
-
-#define MAX_DWORD 4294967296ul
-
-typedef __int8 INT8;
-typedef __int16 INT16;
-typedef __int32 INT32;
-typedef __int64 INT64;
 
 // Common macros
 #ifndef LOW

@@ -51,26 +51,26 @@
 // Tape Block header
 typedef struct 
 {
-	BYTE Zero;						// always zero byte
-  BYTE Magic;						// always 0x6a
-	BYTE BlockType;				// Block type: Header=0xff, data=0x00
-  BYTE FileType;				// File type: Buffered: 0x01, non-buffered: 0x11
-  BYTE CopyProtect;			// Copy protection: not protected=0x00
-	BYTE SectorsInBlock;	// Number of sectors in this block
+	uint8_t Zero;						// always zero byte
+  uint8_t Magic;					// always 0x6a
+	uint8_t BlockType;			// Block type: Header=0xff, data=0x00
+  uint8_t FileType;				// File type: Buffered: 0x01, non-buffered: 0x11
+  uint8_t CopyProtect;		// Copy protection: not protected=0x00
+	uint8_t SectorsInBlock;	// Number of sectors in this block
 } TAPEBlockHeaderType;
 
 // Tape Sector header
 typedef struct 
 {
-	BYTE SectorNumber;
-  BYTE BytesInSector;		// Sector length in bytes (0=256bytes)
+	uint8_t SectorNumber;
+  uint8_t BytesInSector;		// Sector length in bytes (0=256bytes)
 } TAPESectorHeaderType;
 
 // Tape Sector end
 typedef struct 
 {
-	BYTE EOFFlag;
-	WORD CRC;
+	uint8_t EOFFlag;
+	uint16_t CRC;
 } TAPESectorEndType;
 
 #pragma pack(pop)
@@ -91,8 +91,8 @@ bool TAPEValidateBlockHeader(TAPEBlockHeaderType* in_block_header);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
-extern WORD g_frequency_offset;
-extern WORD g_leading_length;
-extern WORD g_gap_length;
+extern uint16_t g_frequency_offset;
+extern uint16_t g_leading_length;
+extern uint16_t g_gap_length;
 
 #endif

@@ -31,7 +31,7 @@ typedef struct
 {
 	bool			Free;
 	WAVEHDR		Header;
-	BYTE			Buffer[WAVEOUT_BUFFER_LENGTH];
+	uint8_t			Buffer[WAVEOUT_BUFFER_LENGTH];
 } WaveOutBuffer;
 
 //wave inout buffer
@@ -102,7 +102,7 @@ bool WDOpenInput(wchar_t* in_file_name)
 	wave_format.nBlockAlign 			= wave_format.wBitsPerSample * wave_format.nChannels / 8;
 
   // open device
-  result = waveInOpen( &l_wavein_handle, WAVE_MAPPER, &wave_format, (DWORD)l_wavein_event, 0, CALLBACK_EVENT );
+  result = waveInOpen( &l_wavein_handle, WAVE_MAPPER, &wave_format, (uint32_t)l_wavein_event, 0, CALLBACK_EVENT );
 	if( result != MMSYSERR_NOERROR )
 		success = false;
 
@@ -133,7 +133,7 @@ bool WDOpenInput(wchar_t* in_file_name)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Reads sample
-bool WDReadSample(INT32* out_sample)
+bool WDReadSample(int32_t* out_sample)
 {
 //	wchar_t buffer[100];
 	int peak_value;
@@ -276,7 +276,7 @@ bool WDOpenOutput(wchar_t* in_file_name)
 	wave_format.nBlockAlign 			= wave_format.wBitsPerSample * wave_format.nChannels / 8;
 
   // open device
-  result = waveOutOpen( &l_waveout_handle, WAVE_MAPPER, &wave_format, (DWORD)l_waveout_event, 0, CALLBACK_EVENT );
+  result = waveOutOpen( &l_waveout_handle, WAVE_MAPPER, &wave_format, (uint32_t)l_waveout_event, 0, CALLBACK_EVENT );
 	if( result != MMSYSERR_NOERROR )
 		success = false;
 
@@ -302,7 +302,7 @@ bool WDOpenOutput(wchar_t* in_file_name)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Writes sample to the wave output device
-bool WDWriteSample(BYTE in_sample)
+bool WDWriteSample(uint8_t in_sample)
 {
 	bool success = true;
 
@@ -478,7 +478,7 @@ bool WDOpenOutput(wchar_t* in_file_name)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Writes sample to the wave output device
-int WDWriteSample(BYTE in_sample)
+int WDWriteSample(uint8_t in_sample)
 {
 }
 
@@ -497,7 +497,7 @@ bool WDOpenInput(wchar_t* in_file_name)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Reads sample
-bool WDReadSample(INT32* out_sample)
+bool WDReadSample(int32_t* out_sample)
 { 
 	return false;
 }

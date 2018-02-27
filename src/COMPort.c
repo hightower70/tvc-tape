@@ -32,11 +32,11 @@ typedef enum
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
-static DWORD l_data_byte_index;
+static uint32_t l_data_byte_index;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Local function prototypes
-static bool StoreByteInStruct(BYTE in_data_byte, void* in_struct, size_t in_size);
+static bool StoreByteInStruct(uint8_t in_data_byte, void* in_struct, size_t in_size);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Initializes COM port access
@@ -63,7 +63,7 @@ bool COMSave(wchar_t* in_tape_file_name)
 	if( UARTOpen(&g_com_config) )
 	{
 		// send header block
-		UARTSendBlock((BYTE*)&cas_program_header, sizeof(cas_program_header));
+		UARTSendBlock((uint8_t*)&cas_program_header, sizeof(cas_program_header));
 
 		// send datatv blocks
 		block_start_pos = 0;
@@ -78,7 +78,7 @@ bool COMSave(wchar_t* in_tape_file_name)
 			DisplayProgressBar(L"Data sent", block_start_pos + current_block_length, g_db_buffer_length);
 
 			// send data
-			UARTSendBlock((BYTE*)&g_db_buffer[block_start_pos], current_block_length);
+			UARTSendBlock((uint8_t*)&g_db_buffer[block_start_pos], current_block_length);
 
 			// next block
 			block_start_pos += current_block_length;
@@ -106,10 +106,10 @@ LoadStatus COMLoad(void)
 {
 	LoadStatus load_status = LS_Unknown;
 	COMLoadState com_load_state = COM_LS_Header;
-	BYTE uart_buffer[UART_INPUT_BUFFER_LENGTH];
-	DWORD bytes_received;
+	uint8_t uart_buffer[UART_INPUT_BUFFER_LENGTH];
+	uint32_t bytes_received;
 	CASProgramFileHeaderType cas_program_header;
-	DWORD  buffer_index;
+	uint32_t  buffer_index;
 
 	// Open UART
 	if(!UARTOpen(&g_com_config))
@@ -172,12 +172,12 @@ LoadStatus COMLoad(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Stores received byte in a struct
-static bool StoreByteInStruct(BYTE in_data_byte, void* in_struct, size_t in_size)
+static bool StoreByteInStruct(uint8_t in_data_byte, void* in_struct, size_t in_size)
 {
 	if( l_data_byte_index < in_size)
 	{
 		// store byte
-		*((BYTE*)in_struct + l_data_byte_index) = in_data_byte;
+		*((uint8_t*)in_struct + l_data_byte_index) = in_data_byte;
 		l_data_byte_index++;
 
 		// check if this is the last byte of the struct

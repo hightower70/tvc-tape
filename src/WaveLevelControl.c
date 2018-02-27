@@ -36,15 +36,15 @@ typedef enum
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
-static INT32 l_envelope[LOOK_AHEAD_BUFFER_LENGTH];
-static INT32 l_look_ahead_buffer[LOOK_AHEAD_BUFFER_LENGTH];
-static BYTE l_look_ahead_buffer_index = 0;
-static BYTE l_last_peak_index;
+static int32_t l_envelope[LOOK_AHEAD_BUFFER_LENGTH];
+static int32_t l_look_ahead_buffer[LOOK_AHEAD_BUFFER_LENGTH];
+static uint8_t l_look_ahead_buffer_index = 0;
+static uint8_t l_last_peak_index;
 static SignalSlopeType l_prev_slope;
-static INT32 l_prev_sample;
-static INT32 l_peak_threshold = 10;
+static int32_t l_prev_sample;
+static int32_t l_peak_threshold = 10;
 static WaveLevelControlModeType l_mode = WLCMT_NoiseKiller;
-static INT32 l_noise_killer_silence_length = 0;
+static int32_t l_noise_killer_silence_length = 0;
 
 #ifdef DEBUG_CSV
 static int l_sample_counter;
@@ -53,19 +53,19 @@ static FILE* l_debug_output;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
-BYTE g_wave_level_control_mode = 1;
+uint8_t g_wave_level_control_mode = 1;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-static void DetectEnvelope(INT32 in_sample);
-static void CalculateEnvelope(INT32 in_peak_level, BYTE in_peak_level_index);
-static INT32 SampleABS(INT32 in_value);
+static void DetectEnvelope(int32_t in_sample);
+static void CalculateEnvelope(int32_t in_peak_level, uint8_t in_peak_level_index);
+static int32_t SampleABS(int32_t in_value);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Initializes level control system
 void WLCInit(void)
 {
-	BYTE i;
+	uint8_t i;
 
 	// initialize
 	for(i = 0;i < LOOK_AHEAD_BUFFER_LENGTH; i++)
@@ -89,10 +89,10 @@ void WLCInit(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Process sampke (apply envelope control)
-INT32 WLCProcessSample(INT32 in_sample)
+int32_t WLCProcessSample(int32_t in_sample)
 {
 	// get old sample
-	INT32 sample;
+	int32_t sample;
 
 	if(g_wave_level_control_mode != 1)
 		return in_sample;
@@ -108,7 +108,7 @@ INT32 WLCProcessSample(INT32 in_sample)
 	if(l_envelope[l_look_ahead_buffer_index] == 0)
 		sample = 0;
 	else
-		sample = (INT16)((INT64)sample * TARGET_SAMPLE_AMPLITUDE / l_envelope[l_look_ahead_buffer_index]);
+		sample = (int16_t)((int64_t)sample * TARGET_SAMPLE_AMPLITUDE / l_envelope[l_look_ahead_buffer_index]);
 
 #ifdef DEBUG_CSV
 	sprintf(buffer,"%d;%d\n",l_look_ahead_buffer[l_look_ahead_buffer_index], l_envelope[l_look_ahead_buffer_index]);
@@ -169,12 +169,12 @@ void WLCSetMode(WaveLevelControlModeType in_mode)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Detect envelope corner points
-static void DetectEnvelope(INT32 in_sample)
+static void DetectEnvelope(int32_t in_sample)
 {
-	BYTE next_look_ahead_buffer_index;
+	uint8_t next_look_ahead_buffer_index;
 	SignalSlopeType actual_slope;
-	BYTE peak_index;
-	INT32 peak_sample;
+	uint8_t peak_index;
+	int32_t peak_sample;
 	bool peak_found = false;
 
 	// peak element index calculation
@@ -289,14 +289,14 @@ static void DetectEnvelope(INT32 in_sample)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Generates envelope values using linear interpolation between corner points
-static void CalculateEnvelope(INT32 in_peak_level, BYTE in_peak_level_index)
+static void CalculateEnvelope(int32_t in_peak_level, uint8_t in_peak_level_index)
 {
-	BYTE envelope_step_count;
-	BYTE envelope_step_index;
-	BYTE envelope_index;
-	INT32 start_peak_level;
-	INT32 envelope;
-	INT32 sample_abs;
+	uint8_t envelope_step_count;
+	uint8_t envelope_step_index;
+	uint8_t envelope_index;
+	int32_t start_peak_level;
+	int32_t envelope;
+	int32_t sample_abs;
 
 	// number of envelope steps
 	if(l_last_peak_index < in_peak_level_index)
@@ -313,7 +313,7 @@ static void CalculateEnvelope(INT32 in_peak_level, BYTE in_peak_level_index)
 
 	while(envelope_index != in_peak_level_index)
 	{
-		envelope = (INT32)start_peak_level + (in_peak_level - start_peak_level) * envelope_step_index / envelope_step_count;
+		envelope = (int32_t)start_peak_level + (in_peak_level - start_peak_level) * envelope_step_index / envelope_step_count;
 		sample_abs = SampleABS(l_look_ahead_buffer[envelope_index]);
 
 		if(sample_abs > l_peak_threshold && envelope < sample_abs)
@@ -333,7 +333,7 @@ static void CalculateEnvelope(INT32 in_peak_level, BYTE in_peak_level_index)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Calculates absolute value
-static INT32 SampleABS(INT32 in_value)
+static int32_t SampleABS(int32_t in_value)
 {
 	if( in_value>=0 )
 		return in_value;

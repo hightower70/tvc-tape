@@ -15,8 +15,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-INT32 FilterStrong(INT32 in_new_sample);
-INT32 FilterFast(INT32 in_new_sample);
+int32_t FilterStrong(int32_t in_new_sample);
+int32_t FilterFast(int32_t in_new_sample);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -24,7 +24,7 @@ FilterTypes g_filter_type = FT_Auto;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Filters sample
-INT32 WFProcessSample(INT32 in_new_sample)
+int32_t WFProcessSample(int32_t in_new_sample)
 {
 	switch(g_filter_type)
 	{
@@ -66,9 +66,9 @@ z = 0.816778 + j 0.302049
 #define NCoef 4
 #define DCgain 128
 
-INT32 FilterFast(INT32 NewSample)
+int32_t FilterFast(int32_t NewSample)
 {
-    INT16 ACoef[NCoef+1] = {
+    int16_t ACoef[NCoef+1] = {
         10231,
             0,
         -20462,
@@ -76,7 +76,7 @@ INT32 FilterFast(INT32 NewSample)
         10231
     };
 
-    INT16 BCoef[NCoef+1] = {
+    int16_t BCoef[NCoef+1] = {
          4096,
         -14300,
         19145,
@@ -84,10 +84,10 @@ INT32 FilterFast(INT32 NewSample)
          2737
     };
 
-    static INT64 y[NCoef+1]; //output samples
+    static int64_t y[NCoef+1]; //output samples
     //Warning!!!!!! This variable should be signed (input sample width + Coefs width + 4 )-bit width to avoid saturation.
 
-		static INT32 x[NCoef+1]; //input samples
+		static int32_t x[NCoef+1]; //input samples
     int n;
 
     //shift the old samples
@@ -98,13 +98,13 @@ INT32 FilterFast(INT32 NewSample)
 
     //Calculate the new output
     x[0] = NewSample;
-    y[0] = (INT64)ACoef[0] * x[0];
+    y[0] = (int64_t)ACoef[0] * x[0];
     for(n=1; n<=NCoef; n++)
-        y[0] += (INT64)ACoef[n] * x[n] - BCoef[n] * y[n];
+        y[0] += (int64_t)ACoef[n] * x[n] - BCoef[n] * y[n];
 
     y[0] /= BCoef[0];
     
-    return (INT32)(y[0] / DCgain);
+    return (int32_t)(y[0] / DCgain);
 }
 #undef NCoef
 #undef DCgain
@@ -149,9 +149,9 @@ z = 0.894087 + j 0.404846
 #define Ntap 64
 #define DCgain 262144
 
-INT32 FilterStrong(INT32 in_new_sample)
+int32_t FilterStrong(int32_t in_new_sample)
 {
-	static INT16 FIRCoef[Ntap] = { 
+	static int16_t FIRCoef[Ntap] = { 
          4354,
          3860,
          2932,
@@ -218,8 +218,8 @@ INT32 FilterStrong(INT32 in_new_sample)
          4383
     };
 
-		static INT32 x[Ntap]; //input samples
-    INT64 y=0;            //output sample
+		static int32_t x[Ntap]; //input samples
+    int64_t y=0;            //output sample
     int n;
 
     //shift the old samples
@@ -231,7 +231,7 @@ INT32 FilterStrong(INT32 in_new_sample)
     for(n=0; n<Ntap; n++)
         y += FIRCoef[n] * x[n];
     
-    return (INT32)(y / DCgain);
+    return (int32_t)(y / DCgain);
 }
 #undef Ntap
 #undef DCgain
@@ -416,7 +416,7 @@ INT16 BandpassFilter(INT16 in_new_sample)
     };
 
     static INT16 x[Ntap]; //input samples
-    __int64 y=0;            //output sample
+    __int64_t y=0;            //output sample
     int n;
 
     //shift the old samples

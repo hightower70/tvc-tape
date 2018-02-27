@@ -27,6 +27,7 @@
 #include "TTPFile.h"
 #include "BINFile.h"
 #include "HEXFile.h"
+#include "ROMFile.h"
 #include "DataBuffer.h"
 #include "FileUtils.h"
 #include "Console.h"
@@ -62,7 +63,8 @@ bool g_overwrite_output_file = false;
 bool g_stop_after_one_file = false;
 bool g_one_bit_wave_file = false;
 bool g_exclude_basic_program = false;
-WORD g_lomem_address = 6639;
+uint16_t g_lomem_address = 6639;
+int g_rom_loader_type = 0;
 
 COMConfigType g_com_config;
 
@@ -238,6 +240,7 @@ int wmain( int argc, wchar_t **argv )
 						g_output_file_type = FT_CAS;
 						break;
 
+					// COM -> CAS
 					case FT_COM:
 						g_output_file_type = FT_CAS;
 						break;
@@ -262,7 +265,7 @@ int wmain( int argc, wchar_t **argv )
 			}
 
 			// check input-output type
-			if((g_input_file_type == FT_WaveInOut || g_input_file_type == FT_WAV) && (g_output_file_type == FT_WaveInOut || g_output_file_type == FT_WAV))
+			if(g_input_file_type == FT_WaveInOut && g_output_file_type == FT_WaveInOut)
 			{
 				DisplayError(L"Error: Wave In/Wav and Wave out/Wav can't be used together.\n");
 				return 1;
@@ -393,49 +396,58 @@ int wmain( int argc, wchar_t **argv )
 							int file_name_start_pos = 0;
 							int file_name_length;
 
-							// init
-							output_file_name[0] = '\0';
-
-							// use forced file name if exists
-							if(g_forced_tape_file_name[0] != '\0')
+							if(wcslen(g_output_file_name) > 0)
 							{
-								// copy filename
-								file_name_length = 0;
-								while(g_forced_tape_file_name[file_name_length] != '\0' && file_name_length < DB_MAX_FILENAME_LENGTH)
-								{
-									output_file_name[file_name_length] = g_forced_tape_file_name[file_name_length];
-									file_name_length++;
-								}
-
-								output_file_name[file_name_length] = '\0';
+								// if output file name already specified
+								wcscpy(output_file_name, g_output_file_name);
+								output_file_type = g_output_file_type;
 							}
-	
-							// update file name only when it is empty
-							file_name_length = wcslen(output_file_name);
-							if(file_name_length == 0)
+							else
 							{
-								// find file name start
-								buffer_pos = 0;
-								while(g_input_file_name[buffer_pos] != '\0')
+								// generate output file name
+								output_file_name[0] = '\0';
+
+								// use forced file name if exists
+								if(g_forced_tape_file_name[0] != '\0')
 								{
-									if(g_input_file_name[buffer_pos] == '\\' || g_input_file_name[buffer_pos] == ':' )
+									// copy filename
+									file_name_length = 0;
+									while(g_forced_tape_file_name[file_name_length] != '\0' && file_name_length < DB_MAX_FILENAME_LENGTH)
 									{
-										file_name_start_pos = buffer_pos;
+										output_file_name[file_name_length] = g_forced_tape_file_name[file_name_length];
+										file_name_length++;
 									}
 
-									buffer_pos++;
+									output_file_name[file_name_length] = '\0';
 								}
-
-								// copy file name
-								file_name_length = 0;
-								while(g_input_file_name[file_name_length] != '\0' && file_name_length < DB_MAX_FILENAME_LENGTH && g_input_file_name[file_name_length] != '.' )
+	
+								// update file name only when it is empty
+								file_name_length = wcslen(output_file_name);
+								if(file_name_length == 0)
 								{
-									output_file_name[file_name_length] = g_input_file_name[file_name_start_pos+file_name_length];
-									file_name_length++;
-								}
-								output_file_name[file_name_length] = '\0';
+									// find file name start
+									buffer_pos = 0;
+									while(g_input_file_name[buffer_pos] != '\0')
+									{
+										if(g_input_file_name[buffer_pos] == '\\' || g_input_file_name[buffer_pos] == ':' )
+										{
+											file_name_start_pos = buffer_pos;
+										}
 
-								output_file_type = g_output_file_type;
+										buffer_pos++;
+									}
+
+									// copy file name
+									file_name_length = 0;
+									while(g_input_file_name[file_name_length] != '\0' && file_name_length < DB_MAX_FILENAME_LENGTH && g_input_file_name[file_name_length] != '.' )
+									{
+										output_file_name[file_name_length] = g_input_file_name[file_name_start_pos+file_name_length];
+										file_name_length++;
+									}
+									output_file_name[file_name_length] = '\0';
+
+									output_file_type = g_output_file_type;
+								}
 							}
 						}
 						break;
@@ -492,6 +504,7 @@ int wmain( int argc, wchar_t **argv )
 					// Save output file
 					switch(output_file_type)
 					{
+						// CAS
 						case FT_CAS:
 							if(g_db_crc_error_detected)
 								DisplayMessageAndClearToLineEnd(L"Saving CAS file: %s (CRC Error)", output_file_name);
@@ -500,6 +513,7 @@ int wmain( int argc, wchar_t **argv )
 							success = CASSave(output_file_name);
 							break;
 
+						// BAS
 						case FT_BAS:
 							if(g_db_crc_error_detected)
 								DisplayMessageAndClearToLineEnd(L"Saving BAS file: %s (CRC Error)", output_file_name);
@@ -508,6 +522,7 @@ int wmain( int argc, wchar_t **argv )
 							success = BASSave(output_file_name);
 							break;
 
+						// WAV
 						case FT_WAV:
 							if(l_input_file_name_list == NULL)
 							{
@@ -516,11 +531,13 @@ int wmain( int argc, wchar_t **argv )
 							success = TAPESave(output_file_name);
 							break;
 
+						// Wave Out
 						case FT_WaveInOut:
 							DisplayMessage(L"Generating tape signal. Press <ESC> to stop.\n");
 							success = TAPESave(output_file_name);
 							break;
 
+						// TTP
 						case FT_TTP:
 							if(l_input_file_name_list == NULL)
 							{
@@ -529,16 +546,25 @@ int wmain( int argc, wchar_t **argv )
 							success = TTPSave(output_file_name);
 							break;
 
+						// BIN
 						case FT_BIN:
 							DisplayMessageAndClearToLineEnd(L"Saving BIN file: %s", output_file_name);
 							success = BINSave(output_file_name);
 							break;
 
+						// HEX
 						case FT_HEX:
 							DisplayMessageAndClearToLineEnd(L"Saving HEX file: %s", output_file_name);
 							success = HEXSave(output_file_name);
 							break;
 
+						// ROM
+						case FT_ROM:
+							DisplayMessageAndClearToLineEnd(L"Creating ROM Cart file: %s", output_file_name);
+							success = ROMSave(output_file_name);
+							break;
+
+						// COM
 						case FT_COM:
 							DisplayMessage(L"Sending file over 'COM%d:'. Press <ESC> to stop.\n", g_com_config.PortIndex);
 							success = COMSave(output_file_name);
@@ -627,10 +653,11 @@ static void CloseInputFileList(void)
 static bool ParseWaveGenerationParameters(wchar_t* in_param)
 {
 	wchar_t* token;
+	wchar_t* buffer;
 	int index;
 	int value;
 
-	token = wcstok( in_param, L"," ); 
+	token = wcstok( in_param, L",", &buffer); 
 
 	index = 0;
 	while( token != NULL && index < 3 )
@@ -653,7 +680,7 @@ static bool ParseWaveGenerationParameters(wchar_t* in_param)
 		}
 
     // Get next token: 
-		token = wcstok( NULL, L"," );
+		token = wcstok( NULL, L",", &buffer);
 		index++;
   }
 
@@ -665,10 +692,11 @@ static bool ParseWaveGenerationParameters(wchar_t* in_param)
 static bool ParseWavePreprocessingParameters(wchar_t* in_param)
 {
 	wchar_t* token;
+	wchar_t* buffer;
 	int index;
 	int value;
 
-	token = wcstok( in_param, L"," ); 
+	token = wcstok( in_param, L",", &buffer ); 
 
 	index = 0;
 	while( token != NULL && index < 3 )
@@ -687,7 +715,7 @@ static bool ParseWavePreprocessingParameters(wchar_t* in_param)
 		}
 
     // Get next token: 
-		token = wcstok( NULL, L"," );
+		token = wcstok( NULL, L",", &buffer );
 		index++;
   }
 
@@ -700,6 +728,7 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 {
 	int i;
 	bool success = true;
+	wchar_t* buffer;
 
 	i = 1;
 	while(i < argc && success) 
@@ -849,6 +878,18 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 					}	
 					break;
 
+				case 'r':
+					if (i + 1 < argc)
+					{
+						i++;
+						g_rom_loader_type = _wtoi(argv[i]);
+					}
+					else
+					{
+						success = false;
+					}
+					break;
+
 				case 's':
 					if( i + 1 < argc )
 					{
@@ -884,7 +925,7 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 						int index;
 									
 						index = 0;
-						param = wcstok(argv[++i], L",");
+						param = wcstok(argv[++i], L",", &buffer);
 						while (param != NULL)
 						{
 							switch(index)
@@ -905,7 +946,7 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 									break;
 							}
 
-							param = wcstok(NULL, L",");
+							param = wcstok(NULL, L",", &buffer);
 							index++;
 						}
 					}

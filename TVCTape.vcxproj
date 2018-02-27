@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -15,18 +15,19 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>TVCTape</RootNamespace>
     <ProjectName>TVCTape</ProjectName>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110_xp</PlatformToolset>
+    <PlatformToolset>v141_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -95,6 +96,8 @@
     <ClCompile Include="src\HEXFile.c" />
     <ClCompile Include="src\Main.c" />
     <ClCompile Include="src\DDS.c" />
+    <ClCompile Include="src\ROMFile.c" />
+    <ClCompile Include="src\ROMLoader.c" />
     <ClCompile Include="src\TAPEFile.c" />
     <ClCompile Include="src\TTPFile.c" />
     <ClCompile Include="src\UARTDevice.c" />
@@ -103,6 +106,8 @@
     <ClCompile Include="src\WaveFilter.c" />
     <ClCompile Include="src\WaveLevelControl.c" />
     <ClCompile Include="src\WaveMapper.c" />
+    <ClCompile Include="src\ZX7Compress.c" />
+    <ClCompile Include="src\ZX7Optimize.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\BASFile.h" />
@@ -117,6 +122,8 @@
     <ClInclude Include="inc\HEXFile.h" />
     <ClInclude Include="inc\Main.h" />
     <ClInclude Include="inc\COMPort.h" />
+    <ClInclude Include="inc\ROMFile.h" />
+    <ClInclude Include="inc\ROMLoader.h" />
     <ClInclude Include="inc\TAPEFile.h" />
     <ClInclude Include="inc\TTPFile.h" />
     <ClInclude Include="inc\Types.h" />
@@ -126,6 +133,7 @@
     <ClInclude Include="inc\WaveFilter.h" />
     <ClInclude Include="inc\WaveLevelControl.h" />
     <ClInclude Include="inc\WaveMapper.h" />
+    <ClInclude Include="inc\ZX7Compress.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

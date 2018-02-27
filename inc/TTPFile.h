@@ -28,7 +28,7 @@
 // TTP File header
 typedef struct 
 {
-	DWORD Magic;
+	uint32_t Magic;
 } TTPFileHeaderType;
 
 #pragma pack(pop)

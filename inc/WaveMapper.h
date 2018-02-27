@@ -22,11 +22,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 bool WMOpenInput(wchar_t* in_file_name);
-bool WMReadSample(INT32* out_sample);
+bool WMReadSample(int32_t* out_sample);
 void WMCloseInput(void);
 
 bool WMOpenOutput(wchar_t* in_file_name);
-bool WMWriteSample(BYTE in_sample);
+bool WMWriteSample(uint8_t in_sample);
 void WMCloseOutput(bool in_force_close);
 
 #endif

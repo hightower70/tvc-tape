@@ -26,13 +26,13 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
-extern BYTE g_db_buffer[DB_MAX_DATA_LENGTH];
-extern WORD g_db_buffer_length;
-extern WORD g_db_buffer_index;
+extern uint8_t g_db_buffer[DB_MAX_DATA_LENGTH];
+extern uint16_t g_db_buffer_length;
+extern uint16_t g_db_buffer_index;
 extern bool g_db_copy_protect;
 extern bool g_db_autostart;
 extern char g_db_file_name[DB_MAX_FILENAME_LENGTH+1];
-extern BYTE g_db_program_type;
+extern uint8_t g_db_program_type;
 extern bool g_db_crc_error_detected;
 
 ///////////////////////////////////////////////////////////////////////////////

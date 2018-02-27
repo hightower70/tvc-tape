@@ -14,6 +14,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Includes
 #include "Types.h"
+#include "FileUtils.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -28,22 +29,22 @@
 // Tape/CAS Program file header
 typedef struct 
 {
-	BYTE Zero;						// Zero
-	BYTE FileType;				// Program type: 0x01 - ASCII, 0x00 - binary
-	WORD FileLength;			// Length of the file
-	BYTE Autorun;					// Autostart: 0xff, no autostart: 0x00
-	BYTE Zeros[10];				// Zero
-  BYTE Version;					// Version
+	uint8_t Zero;							// Zero
+	uint8_t FileType;					// Program type: 0x01 - ASCII, 0x00 - binary
+	uint16_t FileLength;			// Length of the file
+	uint8_t Autorun;					// Autostart: 0xff, no autostart: 0x00
+	uint8_t Zeros[10];				// Zero
+  uint8_t Version;					// Version
 } CASProgramFileHeaderType;
 
 // CAS UPM header
 typedef struct
 {
-	BYTE FileType;				// File type: Buffered: 0x01, non-buffered: 0x11
-	BYTE CopyProtect;			// Copy Protect: 0x01	file is copy protected, 0x00 non protected
-	WORD BlockNumber;			// Number of the blocks (0x80 bytes length) occupied by the program
-	BYTE LastBlockBytes;	// Number of the used bytes in the last block
-	BYTE Zeros[123];			// unused
+	uint8_t FileType;				// File type: Buffered: 0x01, non-buffered: 0x11
+	uint8_t CopyProtect;		// Copy Protect: 0x01	file is copy protected, 0x00 non protected
+	uint16_t BlockNumber;		// Number of the blocks (0x80 bytes length) occupied by the program
+	uint8_t LastBlockBytes;	// Number of the used bytes in the last block
+	uint8_t Zeros[123];			// unused
 } CASUPMHeaderType;
 
 #pragma pack(pop)

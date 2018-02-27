@@ -15,11 +15,11 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
-static WORD l_crc;
+static uint16_t l_crc;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Local functions
-static WORD CRCAddBit(bool in_bit);
+static uint16_t CRCAddBit(bool in_bit);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Initializes CRC value
@@ -30,14 +30,14 @@ void CRCReset(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Gets current CRC value
-WORD CRCGet(void)
+uint16_t CRCGet(void)
 {
 	return l_crc;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Calculates CRC
-WORD CRCAddByte(BYTE in_data)
+uint16_t CRCAddByte(uint8_t in_data)
 {
 	int i;
 
@@ -60,7 +60,7 @@ WORD CRCAddByte(BYTE in_data)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Adds buffer content to the CRC
-WORD CRCAddBlock(BYTE* in_buffer, int in_buffer_length)
+uint16_t CRCAddBlock(uint8_t* in_buffer, int in_buffer_length)
 {
 	while(in_buffer_length > 0 )
 	{
@@ -74,10 +74,10 @@ WORD CRCAddBlock(BYTE* in_buffer, int in_buffer_length)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Adds one bit to CRC
-static WORD CRCAddBit(bool in_bit)
+static uint16_t CRCAddBit(bool in_bit)
 {
-	BYTE A;
-	BYTE CY;
+	uint8_t A;
+	uint8_t CY;
 
 	if(in_bit!=false)					//     LD  A,80
 		A = 0x80;								//     JR  NZ,L1

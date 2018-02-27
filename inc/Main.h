@@ -19,7 +19,6 @@
 #include "FileUtils.h"
 #include "COMPort.h"
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Global settings
 #define ENABLE_WAVE_DEVICES
@@ -48,7 +47,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
-void AppendOutputFileExtension(wchar_t* in_out_file_name);
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -66,8 +65,9 @@ extern int g_forced_autostart;
 extern bool g_output_message;
 extern bool g_overwrite_output_file;
 extern bool g_exclude_basic_program;
-extern WORD g_lomem_address;
+extern uint16_t g_lomem_address;
 extern bool g_one_bit_wave_file;
+extern int g_rom_loader_type;
 
 extern COMConfigType g_com_config;
 #endif

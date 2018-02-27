@@ -29,42 +29,42 @@
 
 typedef struct 
 {
-	DWORD	ChunkID;		// 'RIFF'
-	DWORD ChunkSize;		
-	DWORD Format;			// 'WAVE'
+	uint32_t	ChunkID;		// 'RIFF'
+	uint32_t	ChunkSize;		
+	uint32_t	Format;			// 'WAVE'
 } RIFFHeaderType;
 
 typedef struct 
 {
-	DWORD	ChunkID;
-	DWORD ChunkSize;		
+	uint32_t	ChunkID;
+	uint32_t	ChunkSize;		
 } ChunkHeaderType;
 
 typedef struct 
 {
-	WORD	AudioFormat;	// PCM = 1
-	WORD	NumChannels;
-	DWORD	SampleRate;
-	DWORD ByteRate;
-	WORD	BlockAlign;
-	WORD	BitsPerSample;
+	uint16_t	AudioFormat;	// PCM = 1
+	uint16_t	NumChannels;
+	uint32_t	SampleRate;
+	uint32_t	ByteRate;
+	uint16_t	BlockAlign;
+	uint16_t	BitsPerSample;
 } FormatChunkType;
 
 #pragma pack(pop)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
-extern DWORD g_input_wav_file_sample_count;
-extern DWORD g_input_wav_file_sample_index;
+extern uint32_t g_input_wav_file_sample_count;
+extern uint32_t g_input_wav_file_sample_index;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Functions prototypes
 bool WFOpenInput(wchar_t* in_file_name);
-bool WFReadSample(INT32* out_sample);
+bool WFReadSample(int32_t* out_sample);
 void WFCloseInput(void);
 
-bool WFOpenOutput(wchar_t* in_file_name, BYTE in_bits_per_sample);
-void WFWriteSample(INT32 in_sample);
+bool WFOpenOutput(wchar_t* in_file_name, uint8_t in_bits_per_sample);
+void WFWriteSample(int32_t in_sample);
 void WFCloseOutput(bool in_force_close);
 
 #endif

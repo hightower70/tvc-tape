@@ -58,7 +58,7 @@ bool UARTOpen(COMConfigType* in_config)
   if( success )
     success = GetCommTimeouts( l_uart_handle, &time );
 
-  time.ReadIntervalTimeout          = MAXDWORD;
+  time.ReadIntervalTimeout          = UINT32_MAX;
   time.ReadTotalTimeoutMultiplier   = 0;
   time.ReadTotalTimeoutConstant     = 0;
   time.WriteTotalTimeoutConstant    = 0;
@@ -72,16 +72,16 @@ bool UARTOpen(COMConfigType* in_config)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Sends block of data to the uart
-void UARTSendBlock(BYTE* in_buffer, DWORD in_buffer_length)
+void UARTSendBlock(uint8_t* in_buffer, uint32_t in_buffer_length)
 {
-	DWORD bytes_written;
+	uint32_t bytes_written;
 
 	WriteFile( l_uart_handle, in_buffer, in_buffer_length, &bytes_written, NULL);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Receives blocks of data from the uart
-DWORD UARTReceiveBlock(BYTE* in_buffer, DWORD in_buffer_length, DWORD* out_bytes_received)
+uint32_t UARTReceiveBlock(uint8_t* in_buffer, uint32_t in_buffer_length, uint32_t* out_bytes_received)
 {
 	SHORT s;
 

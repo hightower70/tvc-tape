@@ -30,6 +30,7 @@ typedef enum
 	FT_HEX,				// Intel HEX file
 	FT_BIN,				// Binary file
 	FT_COM,				// COM port
+	FT_ROM,				// ROM (Cartridge) file
 	FT_WaveInOut,
 	FT_Dynamic // 
 } FileTypes;
@@ -57,8 +58,6 @@ void AppendFileExtension(wchar_t* in_out_file_name, FileTypes in_filetypes);
 FileTypes DetermineFileType(wchar_t* in_file_name);
 bool StringStartsWith(const wchar_t* in_string, const wchar_t* in_prefix);
 
-																									 
-void GenerateTVCFileName(wchar_t* out_tvc_file_name, wchar_t* in_file_name);
 void PCToTVCFilename(char* out_tvc_file_name, wchar_t* in_file_name);
 
 

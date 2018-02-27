@@ -51,8 +51,8 @@
 
 typedef struct
 {
-	BYTE LineLength;
-  WORD LineNumber;
+	uint8_t LineLength;
+  uint16_t LineNumber;
 } BASLine;
 
 #pragma pack(pop)
@@ -66,8 +66,8 @@ typedef struct
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 static LoadStatus ParseLine(void);
-static BYTE UnicodeToHex(int in_pos, LoadStatus* in_load_status);
-static BYTE HexDigitToNumber(char in_digit);
+static uint8_t UnicodeToHex(int in_pos, LoadStatus* in_load_status);
+static uint8_t HexDigitToNumber(char in_digit);
 static int TokenLengthCompare(const void* a, const void* b);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -116,7 +116,7 @@ LoadStatus BASLoad(wchar_t* in_file_name)
 	FILE* bas_file;
 	wchar_t* open_options;
 	TextEncodingType encoding = g_bas_encoding;
-	DWORD bom;
+	uint32_t bom;
 	LoadStatus load_status = LS_Success;
 	int i;
 
@@ -136,7 +136,7 @@ LoadStatus BASLoad(wchar_t* in_file_name)
 		fclose(bas_file);
 
 		// check the BOM	(Byte Order Mark)
-		bom = (DWORD)(BYTE)l_ansi_line_buffer[0] + ((DWORD)(BYTE)l_ansi_line_buffer[1] << 8) + ((DWORD)(BYTE)l_ansi_line_buffer[2] << 16) ;
+		bom = (uint32_t)(uint8_t)l_ansi_line_buffer[0] + ((uint32_t)(uint8_t)l_ansi_line_buffer[1] << 8) + ((uint32_t)(uint8_t)l_ansi_line_buffer[2] << 16) ;
 
 		if(bom == 0x00BFBBEF)
 		{
@@ -238,13 +238,13 @@ LoadStatus BASLoad(wchar_t* in_file_name)
 // Parse basic line
 static LoadStatus ParseLine(void)
 {
-	WORD line_number;
+	uint16_t line_number;
 	int buffer_index;
 	int line_start_index;
 	int token_index;
 	wchar_t uch;
 	LoadStatus load_status = LS_Success;
-	BYTE current_token;
+	uint8_t current_token;
 	int token_pos;
 	int i;
 	bool store_character;
@@ -370,10 +370,10 @@ static LoadStatus ParseLine(void)
 						if(uch > 0x7f)
 						{
 							// check for hungarian characters
-							current_token = (BYTE)UNICODECharToTVCChar(uch);
+							current_token = (uint8_t)UNICODECharToTVCChar(uch);
 							if(current_token != '\0')
 							{
-								g_db_buffer[g_db_buffer_length++] = (BYTE)current_token - 0x80;
+								g_db_buffer[g_db_buffer_length++] = (uint8_t)current_token - 0x80;
 							}
 							else
 								load_status = LS_Success;
@@ -382,8 +382,8 @@ static LoadStatus ParseLine(void)
 						{
 							if(uch >= ' ')
 							{
-								current_token = (BYTE)uch;
-								g_db_buffer[g_db_buffer_length++] = (BYTE)uch;
+								current_token = (uint8_t)uch;
+								g_db_buffer[g_db_buffer_length++] = (uint8_t)uch;
 							}
 							else
 								load_status = LS_Success;
@@ -501,7 +501,7 @@ static LoadStatus ParseLine(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Convert ASCII hex digit to value
-static BYTE HexDigitToNumber(char in_digit)
+static uint8_t HexDigitToNumber(char in_digit)
 {
 	if(in_digit >= '0' && in_digit <= '9')
 		return in_digit - '0';
@@ -516,8 +516,8 @@ static BYTE HexDigitToNumber(char in_digit)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Converts Ansi hex characters to byte
-static BYTE UnicodeToHex(int in_pos, LoadStatus* in_load_status)
+// Converts Ansi hex characters to bytes
+static uint8_t UnicodeToHex(int in_pos, LoadStatus* in_load_status)
 {
 	if((*in_load_status) != LS_Success)
 		return 0;
@@ -539,10 +539,10 @@ static BYTE UnicodeToHex(int in_pos, LoadStatus* in_load_status)
 bool BASSave(wchar_t* in_file_name)
 {
 	BASLine* current_line;
-	BYTE* current_data_pos;
+	uint8_t* current_data_pos;
 	BASLine* next_line;
 	FILE* bas_file;
-	BYTE* line_data_end;
+	uint8_t* line_data_end;
 	int state;
 	int current_char;
 	wchar_t* open_options;
@@ -578,7 +578,7 @@ bool BASSave(wchar_t* in_file_name)
 	// start processing cas file
 	current_line = (BASLine*)g_db_buffer;
 
-	while(((BYTE*)current_line - g_db_buffer) < g_db_buffer_length && current_line->LineLength != BAS_PRGEND) 
+	while(((uint8_t*)current_line - g_db_buffer) < g_db_buffer_length && current_line->LineLength != BAS_PRGEND) 
 	{
 		// check basic format
 		if(current_line->LineLength < sizeof (BASLine))
@@ -597,7 +597,7 @@ bool BASSave(wchar_t* in_file_name)
 		}	
 		
 		// set next line pointer
-		next_line = (BASLine*)((BYTE*)current_line + current_line->LineLength);
+		next_line = (BASLine*)((uint8_t*)current_line + current_line->LineLength);
 
 		// write line number
 		if(g_bas_encoding == TET_ANSI)
@@ -610,8 +610,8 @@ bool BASSave(wchar_t* in_file_name)
 		}
 
 		// decompress line
-		current_data_pos = (BYTE*)current_line + sizeof(*current_line);
-		line_data_end = (BYTE*)next_line;
+		current_data_pos = (uint8_t*)current_line + sizeof(*current_line);
+		line_data_end = (uint8_t*)next_line;
 		if(current_data_pos <= line_data_end - 1 && *(line_data_end - 1) == BAS_LINEND) 
 			line_data_end--;
 
@@ -694,7 +694,7 @@ bool BASSave(wchar_t* in_file_name)
 	}
 
 	// write remaining data offset
-	remaining_byte_index = ((BYTE*)current_line - g_db_buffer) + 1; // +1 beacuse of the BAS_PRGEND byte
+	remaining_byte_index = ((uint8_t*)current_line - g_db_buffer) + 1; // +1 beacuse of the BAS_PRGEND byte
 	if(remaining_byte_index < g_db_buffer_length)
 	{
 		if(g_bas_encoding == TET_ANSI)

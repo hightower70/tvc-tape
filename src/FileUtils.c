@@ -36,6 +36,7 @@ static FileExtensionEntry l_file_extensions[] =
 	{ L".ttp", FT_TTP },
 	{ L".bin", FT_BIN },
 	{ L".hex", FT_HEX },
+	{ L".rom", FT_ROM },
 
 	{ NULL,   FT_Unknown }
 };

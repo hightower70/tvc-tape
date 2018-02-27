@@ -42,9 +42,9 @@ LoadStatus BINLoad(wchar_t* in_file_name)
 	if(bin_file == NULL)
 		return LS_Fatal;
 
-	length = fread(g_db_buffer,  sizeof(BYTE), DB_MAX_DATA_LENGTH, bin_file);
+	length = fread(g_db_buffer,  sizeof(uint8_t), DB_MAX_DATA_LENGTH, bin_file);
 
-	g_db_buffer_length = (WORD)length;
+	g_db_buffer_length = (uint16_t)length;
 
 	return LS_Success;
 }
@@ -67,7 +67,7 @@ bool BINSave(wchar_t* in_file_name)
 	if(bin_file == NULL)
 		return false;
 
-	fwrite(&g_db_buffer[start_pos], sizeof(BYTE), g_db_buffer_length - start_pos, bin_file);
+	fwrite(&g_db_buffer[start_pos], sizeof(uint8_t), g_db_buffer_length - start_pos, bin_file);
 
 	fclose(bin_file);
 

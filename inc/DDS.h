@@ -22,8 +22,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 void InitDDS(void);
-bool GenerateDDSSignal(DWORD in_frequency, DWORD in_cycle_count);
-bool GenerateDDSSilence(WORD in_length_in_ms);
+bool GenerateDDSSignal(uint32_t in_frequency, uint32_t in_cycle_count);
+bool GenerateDDSSilence(uint16_t in_length_in_ms);
 
 
 #endif

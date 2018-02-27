@@ -27,7 +27,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
-//static DWORD l_byte_pos;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Loads CAS file
@@ -102,7 +101,7 @@ bool CASSave(wchar_t* in_file_name)
 
 	fwrite(&upm_header,sizeof(upm_header), 1, cas_file);
 	fwrite(&program_header,sizeof(program_header), 1, cas_file);
-	fwrite(g_db_buffer, sizeof(BYTE), (size_t)g_db_buffer_length, cas_file);
+	fwrite(g_db_buffer, sizeof(uint8_t), (size_t)g_db_buffer_length, cas_file);
 
 	fclose(cas_file);
 

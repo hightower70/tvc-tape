@@ -182,7 +182,7 @@ wchar_t ANSICharToUNICODEChar(char in_char)
 			return L'\x0171';
 
 		default:
-			return (wchar_t)(BYTE)in_char;
+			return (wchar_t)(uint8_t)in_char;
 	}
 }
 

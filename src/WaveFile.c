@@ -21,18 +21,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
 static FILE* l_input_wave_file = NULL;
-DWORD g_input_wav_file_sample_count;
-DWORD g_input_wav_file_sample_index;
-static WORD l_input_wav_file_bits_per_sample;
-static BYTE l_input_wav_file_sample_buffer;
-static BYTE l_input_wav_file_sample_bit_pos = 0;
+uint32_t g_input_wav_file_sample_count;
+uint32_t g_input_wav_file_sample_index;
+static uint16_t l_input_wav_file_bits_per_sample;
+static uint8_t l_input_wav_file_sample_buffer;
+static uint8_t l_input_wav_file_sample_bit_pos = 0;
 static FILE* l_output_wav_file = NULL;
 static FormatChunkType l_output_wav_file_format_chunk;
-static DWORD l_output_wav_file_sample_count;
-static DWORD l_output_wav_file_sample_index;
-static WORD l_output_wav_file_bits_per_sample;
-static BYTE l_output_wav_file_sample_buffer;
-static BYTE l_output_wav_file_sample_bit_pos = 0;
+static uint32_t l_output_wav_file_sample_count;
+static uint32_t l_output_wav_file_sample_index;
+static uint16_t l_output_wav_file_bits_per_sample;
+static uint8_t l_output_wav_file_sample_buffer;
+static uint8_t l_output_wav_file_sample_bit_pos = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -51,7 +51,7 @@ bool WFOpenInput(wchar_t* in_file_name)
 	RIFFHeaderType riff_header;
 	ChunkHeaderType chunk_header;
 	FormatChunkType format_chunk;
-	DWORD pos;
+	uint32_t pos;
 	bool data_chunk_found;
 
 	// open wave file
@@ -139,9 +139,9 @@ bool WFOpenInput(wchar_t* in_file_name)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Reads sample
-bool WFReadSample(INT32* out_sample)
+bool WFReadSample(int32_t* out_sample)
 {
-	WORD buffer;
+	uint16_t buffer;
 	size_t read_count;
 	bool success = false;
 
@@ -152,7 +152,7 @@ bool WFReadSample(INT32* out_sample)
 			if(l_input_wav_file_sample_bit_pos == 0)
 			{
 				// read data if buffer is empty
-				read_count = fread(&l_input_wav_file_sample_buffer, sizeof(BYTE), 1, l_input_wave_file);
+				read_count = fread(&l_input_wav_file_sample_buffer, sizeof(uint8_t), 1, l_input_wave_file);
 				if(read_count == 1)
 				{
 					success = true;
@@ -178,7 +178,7 @@ bool WFReadSample(INT32* out_sample)
 
 		case 8:
 			buffer = 0;
-			read_count = fread(&buffer, sizeof(BYTE), 1, l_input_wave_file);
+			read_count = fread(&buffer, sizeof(uint8_t), 1, l_input_wave_file);
 			if(read_count == 1)
 			{
 				*out_sample = (INT16)(((buffer & 255) - BYTE_SAMPLE_ZERO_VALUE) * 256);
@@ -187,7 +187,7 @@ bool WFReadSample(INT32* out_sample)
 			break;
 
 		case 16:
-			read_count = fread(&buffer, sizeof(WORD), 1, l_input_wave_file);
+			read_count = fread(&buffer, sizeof(uint16_t), 1, l_input_wave_file);
 			if(read_count == 1)
 			{
 				*out_sample = (INT16)buffer;
@@ -219,7 +219,7 @@ void WFCloseInput(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Creates wave file
-bool WFOpenOutput(wchar_t* in_file_name, BYTE in_bits_per_sample)
+bool WFOpenOutput(wchar_t* in_file_name, uint8_t in_bits_per_sample)
 {
 	ChunkHeaderType chunk_header;
 
@@ -262,7 +262,7 @@ bool WFOpenOutput(wchar_t* in_file_name, BYTE in_bits_per_sample)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Write sample to the output wave file
-void WFWriteSample(INT32 in_sample)
+void WFWriteSample(int32_t in_sample)
 {
 	if(l_output_wav_file == NULL)
 		return;
@@ -277,7 +277,7 @@ void WFWriteSample(INT32 in_sample)
 			l_output_wav_file_sample_bit_pos++;
 			if(l_output_wav_file_sample_bit_pos > 7)
 			{
-				fwrite(&l_output_wav_file_sample_buffer, sizeof(BYTE), 1, l_output_wav_file );
+				fwrite(&l_output_wav_file_sample_buffer, sizeof(uint8_t), 1, l_output_wav_file );
 				l_output_wav_file_sample_bit_pos = 0;
 				l_output_wav_file_sample_buffer = 0;
 			}
@@ -285,7 +285,7 @@ void WFWriteSample(INT32 in_sample)
 			break;
 
 		case 8:
-			fwrite(&in_sample, sizeof(BYTE), 1, l_output_wav_file );
+			fwrite(&in_sample, sizeof(uint8_t), 1, l_output_wav_file );
 			break;
 
 		case 16:
@@ -309,7 +309,7 @@ void WFCloseOutput(bool in_force_close)
 	if(l_output_wav_file_format_chunk.BitsPerSample == 1 && l_output_wav_file_sample_bit_pos > 0)
 	{
 		l_output_wav_file_sample_buffer <<= (8-l_output_wav_file_sample_bit_pos);
-		fwrite(&l_output_wav_file_sample_buffer, sizeof(BYTE), 1, l_output_wav_file );
+		fwrite(&l_output_wav_file_sample_buffer, sizeof(uint8_t), 1, l_output_wav_file );
 	}
 
 	// update riff header
@@ -337,7 +337,7 @@ static void WriteRIFFHeader(void)
 {
 	RIFFHeaderType riff_header;
 	//                 RIFF FORMAT		 fmt chunk header          format chunk content			 data chunk header				 data chunk content
-	DWORD chunk_size = sizeof(DWORD) + sizeof(ChunkHeaderType) + sizeof(FormatChunkType) + sizeof(ChunkHeaderType) + l_output_wav_file_sample_count;
+	uint32_t chunk_size = sizeof(uint32_t) + sizeof(ChunkHeaderType) + sizeof(FormatChunkType) + sizeof(ChunkHeaderType) + l_output_wav_file_sample_count;
 
 	// write header
 	riff_header.ChunkID		=	RIFF_HEADER_CHUNK_ID;

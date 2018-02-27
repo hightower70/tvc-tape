@@ -26,13 +26,13 @@ typedef enum
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 void WLCInit(void);
-INT32 WLCProcessSample(INT32 in_sample);
+int32_t WLCProcessSample(int32_t in_sample);
 void WLCClose(void);
 void WLCSetMode(WaveLevelControlModeType in_mode);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
-extern BYTE g_wave_level_control_mode;
+extern uint8_t g_wave_level_control_mode;
 
 
 #endif
