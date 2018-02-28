@@ -4,7 +4,7 @@ Version: 0.2
 The TVCTape converts between various tape file format of a vintage 8-bit computer, manufactured by Videoton in Hungary in late eighties. 
 The program can handle frequency modulated audio signal in real time in both direction. This program can be used for direct data transfer between PC and TV Computer using audio connection on the PC and tape connector on the TVC. 
 
-A following file formats are supported: *Wave In*, *Wave Out*, *WAV*, *CAS*, *BAS*, *TTP*, *BIN*, *HEX*
+A following file formats are supported: *Wave In*, *Wave Out*, *WAV*, *CAS*, *BAS*, *TTP*, *ROM*, *BIN*, *HEX*
 
 ## Wave In/WAV file reading
 The main goal of this software was to recover vintage programs stored on cassette tape. The tapes are severely degraded in the last few decades so some preprocessing is needed before the content can be decoded.
@@ -13,6 +13,9 @@ A filtered signal is transferred to a intelligent signal limiter/gain control un
 A filtered signal goes to the demodulator, where several methods used for processing the still low quality signal. It continuously adopts the internal timing to follow the speed changes of the tape, there is 128 times oversampling for the more accurate period length measurement, and the phase and position of the sync period is determined by a voting algorithm. 
 The demodulated signal is further processed by the decoder. It generates the binary content from the incoming bit-stream. The CRC is calculated and checked, however in the case of mismatched CRCs the file is still saved (with an appended exclamation mark to the file name). So in the case of one or few bits error the content still can be recovered.
 The TVCTape always uses the default Wave In device for signal source and the signal level must be adjusted until the yellow signal level marker just lit. It only accepts the 44.1kHz, 8 or 16 bits, PCM encoded WAV files.
+
+Here is an exmaple of the wave in processing/cleaning. The frist wave form is the original audio data digitalized from the tape, and the lower waveform if digitally cleaned and restored waveform.
+![tvctape_clean](https://user-images.githubusercontent.com/6670256/36795232-c06a16c0-1ca2-11e8-9120-19f3a9566f2a.png)
 
 ## Wave Out/WAV file saving
 The ‘TVCTape’ is capable of generating the frequency modulated signal used for cassette data storage. For generating the signal it uses DDS (Direct Digital Synthesis) algorithm, so the important parameters of the generated signal can be changed. Using the _‘-g’_ switch the generated signal’s frequency can be shifted so a simple “turbo” loader can be implemented.
