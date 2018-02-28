@@ -27,6 +27,9 @@ The BAS file is a text file which contains BASIC program for the TVC. The file i
 ## TTP file
 This file format is generally used by the TVC emulators. This can be store more than one program file and can be loaded sequentially into the emulator as it comes from the tape. Using multiple files is easier by applying the _‘-l’_ or _‘-s’_ switches. The _‘-s’_ switch saves the list of the processed file names into the given text file, while _‘-l’_ loads the list of the files to be process from a text file specified by the switch.
 
+## ROM file
+This is the cartridge ROM format.This format is only supported for output file, input is not supported. The resulted file contains the binary image file which can be programmed into EPROM and connected to the cart port of the computer. Even BASIC programs can be converted to cart rom format. Using _'-r'_ switch the loader moudle can be selected from four possible codes. The loader 0 (_'-r 0'_ switch) doesn't uses compression or any border flashing effect. The loader 1 is without compression but flashing the border while loading the program from the cart to the main RAM. Loader '2' uses ZX7 compression to reduce the size of the cart rom image, so bigger than 16k programs can be converted as well. Dependig the compresibility of the given application 25~30k size application can be stored in the 16k cart. Loader '3' uses same compression but it flashes the border while decompressing and copying application from cart rom to the RAM.
+
 ## BIN file
 This contains the pure binary content of any TVC program file without special header and file information. Using _‘-e’_ switch even the BASIC starter lines can be omitted.
 
