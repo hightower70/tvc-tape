@@ -35,6 +35,7 @@
 #include "WaveLevelControl.h"
 #include "WaveFile.h"
 #include "COMPort.h"
+#include "ROMLoader.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Types
@@ -799,8 +800,7 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 				case 'b':
 					if( i + 1 < argc )
 					{
-						i++;
-						switch (tolower(argv[i][0]))
+						switch (tolower(argv[i + 1][0]))
 						{
 							case 'a':
 								g_bas_encoding = TET_ANSI;
@@ -818,6 +818,9 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 								success = false;
 								break;
 						}
+
+						if (success)
+							i++;
 					}
 					else
 					{
@@ -828,8 +831,9 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 				case 'p':
 					if( i + 1 < argc )
 					{
-						i++;
-						success = ParseWavePreprocessingParameters(argv[i]);
+						success = ParseWavePreprocessingParameters(argv[i + 1]);
+						if (success)
+							i++;
 					}
 					else
 					{
@@ -840,8 +844,9 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 				case 'g':
 					if( i + 1 < argc )
 					{
-						i++;
-						success = ParseWaveGenerationParameters(argv[i]);
+						success = ParseWaveGenerationParameters(argv[i + 1]);
+						if (success)
+							i++;
 					}
 					else
 					{
@@ -881,8 +886,13 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 				case 'r':
 					if (i + 1 < argc)
 					{
-						i++;
-						g_rom_loader_type = _wtoi(argv[i]);
+						g_rom_loader_type = _wtoi(argv[i + 1]);
+
+						if (g_rom_loader_type >= ROM_LOADER_COUNT)
+							success = false;
+
+						if (success)
+							i++;
 					}
 					else
 					{
@@ -893,10 +903,12 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 				case 's':
 					if( i + 1 < argc )
 					{
-						i++;
-						l_output_file_name_list = _wfopen(argv[i], L"wt");
+						l_output_file_name_list = _wfopen(argv[i + 1], L"wt");
 						if(l_output_file_name_list == NULL)
 							success = false;
+
+						if (success)
+							i++;
 					}
 					else
 					{
@@ -907,10 +919,12 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 				case 'l':
 					if( i + 1 < argc )
 					{
-						i++;
-						l_input_file_name_list = _wfopen(argv[i], L"rt");
+						l_input_file_name_list = _wfopen(argv[i + 1], L"rt");
 						if(l_input_file_name_list == NULL)
 							success = false;
+
+						if (success)
+							i++;
 					}
 					else
 					{
@@ -958,14 +972,14 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 
 				default:
 					DisplayError(L"Error: Unknown flag: -%c\n", argv[i][1]);
-					return 1;
+					return false;
 			}
 
 			// display error
 			if(!success)
 			{
 				DisplayError(L"Error: Invalid flag: -%c\n", argv[i][1]);
-				return 1;
+				return false;
 			}
 		} 
 		else 
@@ -984,7 +998,7 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 				else
 				{
 					DisplayError(L"Error: Too many file name specified: %s.\n", argv[i]);
-					return 1;
+					return false;
 				}
 			}
 		}

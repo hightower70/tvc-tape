@@ -100,7 +100,7 @@ void DisplayMessageAndClearToLineEnd(const wchar_t* format, ...)
 void PrintLogo(void)
 {
 	if(g_output_message)
-		fwprintf(stderr, L"TVCTape v0.2 (c)2013-2015 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
+		fwprintf(stderr, L"TVCTape v0.2 (c)2013-2018 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -273,10 +273,10 @@ void PrintHelp(void)
 			L"     s - stop bit count (1(default) or 2)\n"
 			L"     h - handshake (n - none(default), h - hardware)\n"
 			L"  -r n - CART ROM loader type (n - 0-1\n"
-			L"     0 - Uncompresed file loader (default)\n"
-			L"     1 - ZX7 compressed file\n"
-			L"     2 - Uncompresed file loader with border coloring\n"
-			L"     3 - ZX7 compressed file with border coloring\n"
+			L"     0 - Uncompresed program loader (default)\n"
+			L"     1 - Uncompresed program loader with border coloring\n"
+			L"     2 - ZX7 compressed loader\n"
+			L"     3 - ZX7 compressed loader with border coloring\n"
 			L"\n"
 			L"  - 'file1' and 'file2' can be 'CAS', 'BAS', 'TTP', 'BIN', 'HEX' (Intel),\n"
 			L"     ROM (Cart), 'WAV' (PCM), 'WAVE:' (wave in/out device),\n"
