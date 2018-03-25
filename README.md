@@ -14,7 +14,7 @@ A filtered signal goes to the demodulator, where several methods used for proces
 The demodulated signal is further processed by the decoder. It generates the binary content from the incoming bit-stream. The CRC is calculated and checked, however in the case of mismatched CRCs the file is still saved (with an appended exclamation mark to the file name). So in the case of one or few bits error the content still can be recovered.
 The TVCTape always uses the default Wave In device for signal source and the signal level must be adjusted until the yellow signal level marker just lit. It only accepts the 44.1kHz, 8 or 16 bits, PCM encoded WAV files.
 
-Here is an exmaple of the wave in processing/cleaning. The frist wave form is the original audio data digitalized from the tape, and the lower waveform if digitally cleaned and restored waveform.
+Here is an exmaple of the wave in processing/cleaning. The frist wave form is the original audio data digitalized from the tape, and the lower waveform is digitally cleaned and restored waveform.
 ![tvctape_clean](https://user-images.githubusercontent.com/6670256/36795232-c06a16c0-1ca2-11e8-9120-19f3a9566f2a.png)
 
 ## Wave Out/WAV file saving
