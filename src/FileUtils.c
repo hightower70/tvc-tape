@@ -207,8 +207,12 @@ void TVCToPCFilename(wchar_t* out_tvc_file_name, char* in_file_name)
 	{
 		ch = buffer[source_index++];
 
-		if(ch>='0' && ch < '~')
-			out_tvc_file_name[destintion_index++] = ch;
+		if (ch >= ' ' && ch <= '~')
+		{
+			// skip invalid characters for file name
+			if(ch != '<' && ch != '>' && ch != ':' && ch != '"' && ch !='/' && ch != '\\' && ch != '|' && ch != '?' && ch != '*')
+				out_tvc_file_name[destintion_index++] = ch;
+		}
 	}
 	out_tvc_file_name[destintion_index] = 0;
 }
