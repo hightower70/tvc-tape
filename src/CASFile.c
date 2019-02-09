@@ -149,8 +149,10 @@ void CASInitUPMHeader(CASUPMHeaderType* out_header)
 {
 	memset(out_header, 0, sizeof(CASUPMHeaderType));
 
+	uint16_t cas_length = g_db_buffer_length + sizeof(CASUPMHeaderType) + sizeof(CASProgramFileHeaderType);
+
 	out_header->FileType				= CASBLOCKHDR_FILE_UNBUFFERED;
 	out_header->CopyProtect			= (g_db_copy_protect)?0xff:0x00;
-	out_header->BlockNumber			= (g_db_buffer_length + 127) / 128;
-	out_header->LastBlockBytes	= g_db_buffer_length % 128;
+	out_header->BlockNumber			= cas_length / 128;
+	out_header->LastBlockBytes	= cas_length % 128;
 }
