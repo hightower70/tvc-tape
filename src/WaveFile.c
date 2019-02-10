@@ -19,6 +19,10 @@
 #include "Console.h"
 
 ///////////////////////////////////////////////////////////////////////////////
+// Constants
+#define SILENCE_SAMPLE_COUNT_TO_APPEND 32
+
+///////////////////////////////////////////////////////////////////////////////
 // Module global variables
 static FILE* l_input_wave_file = NULL;
 uint32_t g_input_wav_file_sample_count;
@@ -33,6 +37,7 @@ static uint32_t l_output_wav_file_sample_index;
 static uint16_t l_output_wav_file_bits_per_sample;
 static uint8_t l_output_wav_file_sample_buffer;
 static uint8_t l_output_wav_file_sample_bit_pos = 0;
+static uint16_t l_append_silence = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -53,6 +58,8 @@ bool WFOpenInput(wchar_t* in_file_name)
 	FormatChunkType format_chunk;
 	uint32_t pos;
 	bool data_chunk_found;
+
+	l_append_silence = 0;
 
 	// open wave file
 	data_chunk_found = false;
@@ -145,58 +152,94 @@ bool WFReadSample(int32_t* out_sample)
 	size_t read_count;
 	bool success = false;
 
-	// read sample
-	switch (l_input_wav_file_bits_per_sample)
+	if (l_append_silence > 0)
 	{
-		case 1:
-			if(l_input_wav_file_sample_bit_pos == 0)
-			{
-				// read data if buffer is empty
-				read_count = fread(&l_input_wav_file_sample_buffer, sizeof(uint8_t), 1, l_input_wave_file);
-				if(read_count == 1)
+		// append silence sample
+		if (l_append_silence < SILENCE_SAMPLE_COUNT_TO_APPEND)
+		{
+			*out_sample = (INT16)(BYTE_SAMPLE_ZERO_VALUE * 256u);
+			success = true;
+			l_append_silence++;
+		}
+		else
+		{
+			success = false;
+		}
+	}
+	else
+	{
+		// read sample
+		switch (l_input_wav_file_bits_per_sample)
+		{
+			case 1:
+				if (l_input_wav_file_sample_bit_pos == 0)
 				{
+					// read data if buffer is empty
+					read_count = fread(&l_input_wav_file_sample_buffer, sizeof(uint8_t), 1, l_input_wave_file);
+					if (read_count == 1)
+					{
+						success = true;
+					}
+					else
+					{
+						*out_sample = (INT16)(BYTE_SAMPLE_ZERO_VALUE * 256u);
+						success = true;
+						l_append_silence = 1;
+						break;
+					}
+				}
+				else
+				{
+					// there is data in the buffer
 					success = true;
 				}
-			}
-			else
-			{
-				// there is date in the buffer
-				success = true;
-			}
 
-			if(success)
-			{
-				// get sample
-				*out_sample = ((l_input_wav_file_sample_buffer >> (7-l_input_wav_file_sample_bit_pos) & 0x01) != 0) ? MAXINT16 : MININT16;
+				if (success)
+				{
+					// get sample
+					*out_sample = ((l_input_wav_file_sample_buffer >> (7 - l_input_wav_file_sample_bit_pos) & 0x01) != 0) ? MAXINT16 : MININT16;
 
-				// next bit
-				l_input_wav_file_sample_bit_pos++;
-				if(l_input_wav_file_sample_bit_pos == 8)
-					l_input_wav_file_sample_bit_pos = 0;
-			}
-			break;
+					// next bit
+					l_input_wav_file_sample_bit_pos++;
+					if (l_input_wav_file_sample_bit_pos == 8)
+						l_input_wav_file_sample_bit_pos = 0;
+				}
+				break;
 
-		case 8:
-			buffer = 0;
-			read_count = fread(&buffer, sizeof(uint8_t), 1, l_input_wave_file);
-			if(read_count == 1)
-			{
-				*out_sample = (INT16)(((buffer & 255) - BYTE_SAMPLE_ZERO_VALUE) * 256);
-				success = true;
-			}
-			break;
+			case 8:
+				buffer = 0;
+				read_count = fread(&buffer, sizeof(uint8_t), 1, l_input_wave_file);
+				if (read_count == 1)
+				{
+					*out_sample = (INT16)(((buffer & 255) - BYTE_SAMPLE_ZERO_VALUE) * 256u);
+					success = true;
+				}
+				else
+				{
+					*out_sample = (INT16)(BYTE_SAMPLE_ZERO_VALUE * 256u);
+					success = true;
+					l_append_silence = 1;
+				}
+				break;
 
-		case 16:
-			read_count = fread(&buffer, sizeof(uint16_t), 1, l_input_wave_file);
-			if(read_count == 1)
-			{
-				*out_sample = (INT16)buffer;
-				success = true;
-			}
-			break;
+			case 16:
+				read_count = fread(&buffer, sizeof(uint16_t), 1, l_input_wave_file);
+				if (read_count == 1)
+				{
+					*out_sample = (INT16)buffer;
+					success = true;
+				}
+				else
+				{
+					*out_sample = (INT16)(BYTE_SAMPLE_ZERO_VALUE * 256u);
+					success = true;
+					l_append_silence = 1;
+				}
+				break;
+		}
+
+		g_input_wav_file_sample_index++;
 	}
-
-	g_input_wav_file_sample_index++;
 
 	return success;
 }

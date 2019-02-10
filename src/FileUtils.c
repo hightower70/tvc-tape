@@ -187,34 +187,28 @@ void PCToTVCFilename(char* out_tvc_file_name, wchar_t* in_file_name)
 // Generates TVC filename from file full path 
 void TVCToPCFilename(wchar_t* out_tvc_file_name, char* in_file_name)
 {
-	char buffer[MAX_PATH_LENGTH];
 	int source_index, destintion_index;
-	char ch;
+	wchar_t ch;
 
-	if(in_file_name[0] != '\0')
+	// handle empty file name
+	if(in_file_name[0] == '\0')
 	{
-		TVCStringToASCIIString(buffer, in_file_name);
-	}
-	else
-	{
-		strcpy(buffer, "tvcdefault");
+		in_file_name = "tvcdefault";
 	}
 
-	// convert to unicode
+	// convert to unicode and remove invalid path characters
 	source_index = 0;
 	destintion_index = 0;
-	while(source_index < MAX_PATH_LENGTH && destintion_index<MAX_PATH_LENGTH-1 && buffer[source_index] != '\0')
+	while(source_index < MAX_PATH_LENGTH && destintion_index<MAX_PATH_LENGTH-1 && in_file_name[source_index] != '\0')
 	{
-		ch = buffer[source_index++];
+		ch = TVCCharToUNICODEChar(in_file_name[source_index++]);
 
-		if (ch >= ' ' && ch <= '~')
-		{
-			// skip invalid characters for file name
-			if(ch != '<' && ch != '>' && ch != ':' && ch != '"' && ch !='/' && ch != '\\' && ch != '|' && ch != '?' && ch != '*')
-				out_tvc_file_name[destintion_index++] = ch;
-		}
+		// skip invalid characters for file name
+		if(ch != '<' && ch != '>' && ch != ':' && ch != '"' && ch !='/' && ch != '\\' && ch != '|' && ch != '?' && ch != '*')
+			out_tvc_file_name[destintion_index++] = ch;
 	}
-	out_tvc_file_name[destintion_index] = 0;
+
+	out_tvc_file_name[destintion_index] = '\0';
 }
 
 ///////////////////////////////////////////////////////////////////////////////
