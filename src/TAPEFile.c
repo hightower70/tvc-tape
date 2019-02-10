@@ -32,6 +32,8 @@
 #define MIDDLE_PERIOD_BUFFER_LENGTH 256
 #define SYNC_PHASE_MAX_DIFFERENCE 2
 #define SECTOR_END_PERIOD_COUNT 5
+#define DEFAULT_LEADING_LENGTH 4812 // Default leading length in ms (10240period @ 2128Hz)
+#define DEFAULT_GAP_LENGTH 1000 // length of silent gaps before block start in ms
 
 ///////////////////////////////////////////////////////////////////////////////
 // Types
@@ -67,10 +69,16 @@ typedef enum
 	SPT_Low
 } SignalPhaseType;
 
+typedef enum
+{
+	BT_Header,
+	BT_Data
+} BlockType;
+
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 static bool EncodeByte(uint8_t in_data);
-static bool EncodeBlockLeading(void);
+static bool EncodeBlockLeading(BlockType in_block_type);
 static bool EncodeBlock(uint8_t* in_buffer, int in_length);
 static void DisplayOutputHeaderProgress(int in_pos, int in_max_pos);
 static void DisplayOutputDataProgress(int in_pos, int in_max_pos);
@@ -129,8 +137,8 @@ static bool l_header_block_valid;
 static int l_demod_sample_index = 0;  // for debugging only (will be removed)
 
 uint16_t g_frequency_offset = 0;
-uint16_t g_leading_length = 4812;
-uint16_t g_gap_length = 1000;
+uint16_t g_leading_length = DEFAULT_LEADING_LENGTH;
+uint16_t g_gap_length = DEFAULT_GAP_LENGTH;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Initialization of tape functions
@@ -250,7 +258,7 @@ bool TAPESave(wchar_t* in_file_name)
 	// block leading
 	DisplayOutputHeaderProgress(0, 10);
 	if(success)
-		success = EncodeBlockLeading();
+		success = EncodeBlockLeading(BT_Header);
 
 	// write header block	start
 	DisplayOutputHeaderProgress(5, 10);
@@ -316,10 +324,10 @@ bool TAPESave(wchar_t* in_file_name)
 	sector_count = (g_db_buffer_length + 255) / 256;
 	sector_index = 1;
 
-	// block leading
+	// data block leading
 	DisplayOutputDataProgress(0, g_db_buffer_length);
 	if(success)
-		success = EncodeBlockLeading();
+		success = EncodeBlockLeading(BT_Data);
 
 	// write header block
 	if(success)
@@ -450,18 +458,64 @@ static uint16_t OffsetFrequency(uint16_t in_frequency)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Encodes block leading
-static bool EncodeBlockLeading(void)
+static bool EncodeBlockLeading(BlockType in_block_type)
 {
 	bool success;
-	uint16_t period_count = (uint16_t)((((uint32_t)OffsetFrequency(FREQ_LEADING)) * g_leading_length + 500 ) / 1000);
+	uint16_t period_count;
+	uint16_t gap_length;
+	uint16_t leading_length;
 
-	success = GenerateDDSSilence(g_gap_length);
+	// determine gap length
+	if (g_gap_length == DEFAULT_GAP_LENGTH)
+	{
+		switch (in_block_type)
+		{
+			case BT_Header:
+				gap_length = DEFAULT_GAP_LENGTH;
+				break;
 
+			case BT_Data:
+				gap_length = DEFAULT_GAP_LENGTH / 2;
+				break;
+		}
+	}
+	else
+	{
+		gap_length = g_gap_length;
+	}
+
+	// determine leading signal length
+	if (g_leading_length == DEFAULT_LEADING_LENGTH)
+	{
+		switch (in_block_type)
+		{
+			case BT_Header:
+				leading_length = DEFAULT_LEADING_LENGTH;
+				break;
+
+			case BT_Data:
+				leading_length = DEFAULT_LEADING_LENGTH / 2;
+				break;
+		}
+	}
+	else
+	{
+		leading_length = g_leading_length;
+	}
+	
+	// gap
+	success = GenerateDDSSilence(gap_length);
+
+	// leading signal
 	if(success)
 	{
+		// caluclate 
+		period_count = (uint16_t)((((uint32_t)OffsetFrequency(FREQ_LEADING)) * leading_length + 500) / 1000);
+
 		success = GenerateDDSSignal(OffsetFrequency(FREQ_LEADING), period_count);
 	}
 
+	// sync signal
 	if(success)
 		success = GenerateDDSSignal(OffsetFrequency(FREQ_SYNC), 1);
 

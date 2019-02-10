@@ -118,11 +118,11 @@ void ChangeFileExtension(wchar_t* in_file_name, wchar_t* in_extension)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Gets filename and extension from full file name
-void GetFileNameAndExtension(wchar_t* in_file_name, wchar_t* in_path)
+void GetFileNameAndExtension(wchar_t* out_file_name, wchar_t* in_path)
 {
 	wchar_t* filename;
 
-	filename = wcsrchr(in_file_name, '\\');
+	filename = wcsrchr(in_path, '\\');
 
 	if(filename != NULL)
 	{
@@ -133,18 +133,18 @@ void GetFileNameAndExtension(wchar_t* in_file_name, wchar_t* in_path)
 		filename = in_path;
 	}
 
-	wcscpy(in_file_name, filename);
+	wcscpy(out_file_name, filename);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Gets filename without extension from full file name
-void GetFileNameWithoutExtension(wchar_t* in_file_name, wchar_t* in_path)
+void GetFileNameWithoutExtension(wchar_t* out_file_name, wchar_t* in_path)
 {
 	wchar_t* filename_start;
 	wchar_t* filename_end;
 
 	// determine start of the filename
-	filename_start = wcsrchr(in_file_name, '\\');
+	filename_start = wcsrchr(in_path, '\\');
 
 	if(filename_start != NULL)
 	{
@@ -161,9 +161,9 @@ void GetFileNameWithoutExtension(wchar_t* in_file_name, wchar_t* in_path)
 	// copy filename
 	while( *filename_start != '\0' && (filename_end == NULL || filename_start < filename_end))
 	{
-		*in_file_name++ = *filename_start++;
+		*out_file_name++ = *filename_start++;
 	}
-	*in_file_name = '\0';
+	*out_file_name = '\0';
 }
 
 ///////////////////////////////////////////////////////////////////////////////

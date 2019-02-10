@@ -50,8 +50,8 @@ void ReadBlock(FILE* in_file, void* in_buffer, int in_size, LoadStatus* inout_lo
 void WriteBlock(FILE* in_file, void* in_buffer, int in_size, bool* inout_success);
 
 void GenerateUniqueFileName(wchar_t* in_file_name);
-void GetFileNameAndExtension(wchar_t* in_file_name, wchar_t* in_path);
-void GetFileNameWithoutExtension(wchar_t* in_file_name, wchar_t* in_path);
+void GetFileNameAndExtension(wchar_t* out_file_name, wchar_t* in_path);
+void GetFileNameWithoutExtension(wchar_t* out_file_name, wchar_t* in_path);
 void ChangeFileExtension(wchar_t* in_file_name, wchar_t* in_extension);
 void AppendFileExtension(wchar_t* in_out_file_name, FileTypes in_filetypes);
 

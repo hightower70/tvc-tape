@@ -74,8 +74,7 @@ bool GenerateDDSSignal(uint32_t in_frequency, uint32_t in_cycle_count)
 	uint32_t dds_increment;
 	bool success = true;
 	
-	dds_increment = (uint32_t)(((int64_t)in_frequency * INT32_MAX) / SAMPLE_RATE);
-
+	dds_increment = ((in_frequency * DDS_TABLE_LENGTH * 256) / SAMPLE_RATE) << 16;
 	while(in_cycle_count > 0 && success)
 	{
 		sample = l_sine_table[(uint8_t)(l_dds_accumulator >> 24)];

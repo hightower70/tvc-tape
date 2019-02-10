@@ -157,7 +157,7 @@ bool WFReadSample(int32_t* out_sample)
 		// append silence sample
 		if (l_append_silence < SILENCE_SAMPLE_COUNT_TO_APPEND)
 		{
-			*out_sample = (INT16)(BYTE_SAMPLE_ZERO_VALUE * 256u);
+			*out_sample = 0;
 			success = true;
 			l_append_silence++;
 		}
@@ -182,7 +182,7 @@ bool WFReadSample(int32_t* out_sample)
 					}
 					else
 					{
-						*out_sample = (INT16)(BYTE_SAMPLE_ZERO_VALUE * 256u);
+						*out_sample = 0;
 						success = true;
 						l_append_silence = 1;
 						break;
@@ -216,7 +216,7 @@ bool WFReadSample(int32_t* out_sample)
 				}
 				else
 				{
-					*out_sample = (INT16)(BYTE_SAMPLE_ZERO_VALUE * 256u);
+					*out_sample = 0;
 					success = true;
 					l_append_silence = 1;
 				}
@@ -231,7 +231,7 @@ bool WFReadSample(int32_t* out_sample)
 				}
 				else
 				{
-					*out_sample = (INT16)(BYTE_SAMPLE_ZERO_VALUE * 256u);
+					*out_sample = 0;
 					success = true;
 					l_append_silence = 1;
 				}

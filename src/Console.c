@@ -254,7 +254,7 @@ void PrintHelp(void)
 			L"     f - frequency offset in percentage\n"
 			L"     g - length of the gap in ms between header and data blocks\n"
 			L"     l - length of the block leading signal in ms\n"
-			L"         (default = 0,1000,4812; fast=50,200,500)\n"
+			L"         (default = 0,1000,4812; fast=40,200,600)\n"
 			L"  -w filename  stores preprocessed wave data into the specified wav file\n"
 			L"  -1           single bit wave file creation when WAV file output is specified\n"
 			L"               or stops wave (WAV file or WaveIn) processing after loading one\n"
