@@ -903,7 +903,7 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 				case 's':
 					if( i + 1 < argc )
 					{
-						l_output_file_name_list = _wfopen(argv[i + 1], L"wt");
+						l_output_file_name_list = _wfopen(argv[i + 1], L"wt, ccs=UNICODE");
 						if(l_output_file_name_list == NULL)
 							success = false;
 
@@ -919,7 +919,7 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 				case 'l':
 					if( i + 1 < argc )
 					{
-						l_input_file_name_list = _wfopen(argv[i + 1], L"rt");
+						l_input_file_name_list = _wfopen(argv[i + 1], L"rt, ccs=UNICODE");
 						if(l_input_file_name_list == NULL)
 							success = false;
 
