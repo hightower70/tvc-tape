@@ -33,6 +33,7 @@
 
 #define FREQ_TO_PERIOD(x) (SAMPLE_RATE / x)
 
+#define TAPE_MAX_BLOCK_LENGTH					0x100
 #define TAPE_BLOCKHDR_ZERO						0x00
 #define TAPE_BLOCKHDR_MAGIC						0x6a
 #define TAPE_BLOCKHDR_TYPE_HEADER			0xff

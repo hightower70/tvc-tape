@@ -167,6 +167,10 @@ LoadStatus TAPELoad(void)
 	int32_t	sample;
 	LoadStatus load_status = LS_Unknown;
 
+	// init buffer
+	g_db_buffer_length = 0;
+	g_db_buffer_index = 0;
+
 	// scan for files
 	while(load_status == LS_Unknown)
 	{
@@ -953,6 +957,10 @@ static LoadStatus StoreByte(uint8_t in_data_byte)
 					if(l_block_header.BlockType == TAPE_BLOCKHDR_TYPE_HEADER)
 						l_header_block_valid = false;
 
+					// if data block  is coming validata block header
+					if (l_block_header.BlockType == TAPE_BLOCKHDR_TYPE_DATA)
+						l_header_block_valid = true;
+
 					g_db_buffer_index = 0;
 					g_db_crc_error_detected = false;
 					CRCReset();
@@ -990,6 +998,9 @@ static LoadStatus StoreByte(uint8_t in_data_byte)
 
 					// data block
 					case TAPE_BLOCKHDR_TYPE_DATA:
+						if (g_db_buffer_length == 0)
+							g_db_buffer_length = l_block_header.SectorsInBlock * TAPE_MAX_BLOCK_LENGTH;
+
 						SetSectorLength(l_sector_header.BytesInSector);
 						ChangeReaderStatus(TRST_Data);
 						break;
@@ -1078,7 +1089,9 @@ static LoadStatus StoreByte(uint8_t in_data_byte)
 						if(l_sector_end.CRC == CRCGet())
 						{
 							g_db_autostart = (l_program_header.Autorun != 0);
+
 							g_db_buffer_length = l_program_header.FileLength;
+
 							l_header_block_valid = true;
 						}
 						else
@@ -1172,7 +1185,7 @@ static bool StoreByteInStruct(uint8_t in_data_byte, void* in_struct, size_t in_s
 static void SetSectorLength(uint8_t in_sector_length)
 {
 	if(in_sector_length == 0)
-		l_current_sector_length = 256;
+		l_current_sector_length = TAPE_MAX_BLOCK_LENGTH;
 	else
 		l_current_sector_length = in_sector_length;
 }

@@ -25,6 +25,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
 static FILE* l_input_wave_file = NULL;
+static uint8_t g_input_wave_file_channel_count;
 uint32_t g_input_wav_file_sample_count;
 uint32_t g_input_wav_file_sample_index;
 static uint16_t l_input_wav_file_bits_per_sample;
@@ -109,11 +110,12 @@ bool WFOpenInput(wchar_t* in_file_name)
 						success = false;
 					}
 
-					if(format_chunk.NumChannels != 1)
+					if((format_chunk.NumChannels != 1) && (format_chunk.NumChannels != 2))
 					{
-						DisplayError(L"Error: Only mono format is supported.\n");
+						DisplayError(L"Error: Only mono or stereo format is supported.\n");
 						success = false;
 					}
+					g_input_wave_file_channel_count = format_chunk.NumChannels;
 
 					if((format_chunk.BitsPerSample != 1) && (format_chunk.BitsPerSample != 8) && (format_chunk.BitsPerSample != 16)) 
 					{
@@ -128,7 +130,7 @@ bool WFOpenInput(wchar_t* in_file_name)
 				// Data 'data' chunk
 				case CHUNK_ID_DATA:
 					data_chunk_found = true;
-					g_input_wav_file_sample_count = chunk_header.ChunkSize * 8 / l_input_wav_file_bits_per_sample;
+					g_input_wav_file_sample_count = chunk_header.ChunkSize * 8 / l_input_wav_file_bits_per_sample / g_input_wave_file_channel_count;
 					break;
 			}
 
@@ -149,6 +151,7 @@ bool WFOpenInput(wchar_t* in_file_name)
 bool WFReadSample(int32_t* out_sample)
 {
 	uint16_t buffer;
+	uint16_t buffer2;
 	size_t read_count;
 	bool success = false;
 
@@ -209,6 +212,15 @@ bool WFReadSample(int32_t* out_sample)
 			case 8:
 				buffer = 0;
 				read_count = fread(&buffer, sizeof(uint8_t), 1, l_input_wave_file);
+
+				if ((read_count == 1) && (g_input_wave_file_channel_count == 2))
+				{
+					// read sample in stereo mode
+					read_count = fread(&buffer2, sizeof(uint8_t), 1, l_input_wave_file);
+
+					buffer = (uint16_t)((buffer + buffer2) / 2);
+				}
+
 				if (read_count == 1)
 				{
 					*out_sample = (INT16)(((buffer & 255) - BYTE_SAMPLE_ZERO_VALUE) * 256u);
@@ -223,7 +235,17 @@ bool WFReadSample(int32_t* out_sample)
 				break;
 
 			case 16:
+				// read sample
 				read_count = fread(&buffer, sizeof(uint16_t), 1, l_input_wave_file);
+
+				if ((read_count == 1) && (g_input_wave_file_channel_count == 2))
+				{
+					// read sample in stereo mode
+					read_count = fread(&buffer2, sizeof(uint16_t), 1, l_input_wave_file);
+
+					buffer = (uint16_t)(((uint32_t)buffer + buffer2) / 2);
+				}
+
 				if (read_count == 1)
 				{
 					*out_sample = (INT16)buffer;
