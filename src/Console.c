@@ -277,6 +277,8 @@ void PrintHelp(void)
 			L"     1 - Uncompresed program loader with border coloring\n"
 			L"     2 - ZX7 compressed loader\n"
 			L"     3 - ZX7 compressed loader with border coloring\n"
+			L"  -f When output format is a container file (WAV, TTP), append current content\n"
+			L"     to the existing container\n"
 			L"\n"
 			L"  - 'file1' and 'file2' can be 'CAS', 'BAS', 'TTP', 'BIN', 'HEX' (Intel),\n"
 			L"     ROM (Cart), 'WAV' (PCM), 'WAVE:' (wave in/out device),\n"

@@ -59,6 +59,8 @@ FileTypes DetermineFileType(wchar_t* in_file_name);
 bool StringStartsWith(const wchar_t* in_string, const wchar_t* in_prefix);
 
 void PCToTVCFilename(char* out_tvc_file_name, wchar_t* in_file_name);
+void PCToTVCFilenameAndExtension(char* out_tvc_file_name, wchar_t* in_file_name);
 
+bool CheckFileExists(wchar_t* in_file_name);
 
 #endif

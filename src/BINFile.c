@@ -37,6 +37,9 @@ LoadStatus BINLoad(wchar_t* in_file_name)
 	// initialize
 	InitDataBuffer();
 
+	// generate TVC filename
+	PCToTVCFilenameAndExtension(g_db_file_name, in_file_name);
+
 	// open BIN file
 	bin_file = _wfopen(in_file_name, L"rb");
 	if(bin_file == NULL)

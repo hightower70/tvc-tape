@@ -53,7 +53,7 @@ bool TTPOpenInput(wchar_t* in_file_name)
 bool TTPCreateOutput(wchar_t* in_file_name)
 {
 	// save file
-	l_ttp_output_file = _wfopen(in_file_name, L"wb");
+	l_ttp_output_file = _wfopen(in_file_name, L"ab");
 	if(l_ttp_output_file == NULL)
 		return false;
 
@@ -201,7 +201,7 @@ bool TTPSave(wchar_t* in_tape_file_name)
 	uint8_t tape_file_name_length;
 
 	// init
-	tape_file_name_length = (uint8_t)wcslen(in_tape_file_name);
+	tape_file_name_length = (uint8_t)strlen(g_db_file_name);
 
 	// file header
 	TTPInitHeader(&ttp_file_header);
@@ -209,8 +209,10 @@ bool TTPSave(wchar_t* in_tape_file_name)
 
 	// tape block header
 	TAPEInitBlockHeader(&tape_block_header);
+	tape_block_header.BlockType = TAPE_BLOCKHDR_TYPE_HEADER;
 	tape_block_header.SectorsInBlock	= 1;
 	WriteBlock(l_ttp_output_file, &tape_block_header, sizeof(tape_block_header), &success);
+
 	CRCReset();
 	CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
 
@@ -227,17 +229,17 @@ bool TTPSave(wchar_t* in_tape_file_name)
 
 	// write tape file name
 	CRCAddBlock((uint8_t*)&g_db_file_name, tape_file_name_length);
-	WriteBlock(l_ttp_output_file, in_tape_file_name, tape_file_name_length, &success);
+	WriteBlock(l_ttp_output_file, g_db_file_name, tape_file_name_length, &success);
 
 	// write program header
 	CASInitHeader(&cas_program_header);
 	CRCAddBlock((uint8_t*)&cas_program_header, sizeof(cas_program_header));
 	WriteBlock(l_ttp_output_file, &cas_program_header, sizeof(cas_program_header), &success);
-
+	
 	// write sector end
-	tape_sector_end.EOFFlag = TAPE_SECTOR_EOF;
-	CRCAddByte(0);
-	tape_sector_end.CRC = CRCGet();
+	tape_sector_end.EOFFlag = TAPE_SECTOR_NOT_EOF;
+	CRCAddByte(tape_sector_end.EOFFlag);
+	tape_sector_end.CRC = 0;// CRCGet();
 	WriteBlock(l_ttp_output_file, &tape_sector_end, sizeof(tape_sector_end), &success);
 
 	// create data block
@@ -275,7 +277,7 @@ bool TTPSave(wchar_t* in_tape_file_name)
 		tape_sector_end.EOFFlag = (sector_index == sector_count) ? TAPE_SECTOR_EOF : TAPE_SECTOR_NOT_EOF;
 		CRCAddByte(tape_sector_end.EOFFlag);
 
-		tape_sector_end.CRC = CRCGet();
+		tape_sector_end.CRC = 0;// CRCGet();
 
 		WriteBlock(l_ttp_output_file, (uint8_t*)&tape_sector_end, sizeof(tape_sector_end), &success);
 

@@ -66,7 +66,7 @@ bool g_one_bit_wave_file = false;
 bool g_exclude_basic_program = false;
 uint16_t g_lomem_address = 6639;
 int g_rom_loader_type = 0;
-
+bool g_append_container_files = false;
 COMConfigType g_com_config;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -149,15 +149,35 @@ int wmain( int argc, wchar_t **argv )
 	switch(g_output_file_type)
 	{
 		case FT_TTP:
-			DisplayMessage(L"Creating TTP file:%s\n", g_output_file_name);
-			GenerateUniqueFileName(g_output_file_name);
+			if(!g_append_container_files)
+				GenerateUniqueFileName(g_output_file_name);
+
+			if (CheckFileExists(g_output_file_name))
+			{
+				DisplayMessage(L"Appending to TTP file:%s\n", g_output_file_name);
+			}
+			else
+			{
+				DisplayMessage(L"Creating TTP file:%s\n", g_output_file_name);
+			}
 			success = TTPCreateOutput(g_output_file_name);
 			break;
 
 		case FT_WAV:
-			DisplayMessage(L"Creating WAV file:%s\n", g_output_file_name);
-			GenerateUniqueFileName(g_output_file_name);
-			// no break
+			if (!g_append_container_files)
+				GenerateUniqueFileName(g_output_file_name);
+
+			if (CheckFileExists(g_output_file_name))
+			{
+				DisplayMessage(L"Appending to WAV file:%s\n", g_output_file_name);
+			}
+			else
+			{
+				DisplayMessage(L"Creating WAV file:%s\n", g_output_file_name);
+			}
+
+			success = TAPECreateOutput(g_output_file_name);
+			break;
 
 		case FT_WaveInOut:
 			success = TAPECreateOutput(g_output_file_name);
@@ -745,6 +765,10 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 
 				case 'q':
 					g_output_message = false;
+					break;
+
+				case 'f':
+					g_append_container_files = true;
 					break;
 
 				case 'a':

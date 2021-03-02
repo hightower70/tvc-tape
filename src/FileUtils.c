@@ -102,6 +102,22 @@ void GenerateUniqueFileName(wchar_t* in_file_name)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Checks if file exists
+bool CheckFileExists(wchar_t* in_file_name)
+{
+	FILE* test;
+
+	test = _wfopen(in_file_name, L"r");
+	if (test != NULL)
+	{
+		fclose(test);
+		return true;
+	}
+
+	return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Changes file name extension
 void ChangeFileExtension(wchar_t* in_file_name, wchar_t* in_extension)
 {
@@ -177,6 +193,23 @@ void PCToTVCFilename(char* out_tvc_file_name, wchar_t* in_file_name)
 
 	// limit length
 	if(wcslen(buffer)>DB_MAX_FILENAME_LENGTH)
+		buffer[DB_MAX_FILENAME_LENGTH] = '\0';
+
+	// convert charmap
+	UNICODEStringToTVCString(out_tvc_file_name, buffer);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Convert PC filename to TVC filename
+void PCToTVCFilenameAndExtension(char* out_tvc_file_name, wchar_t* in_file_name)
+{
+	wchar_t buffer[MAX_PATH_LENGTH];
+
+	// get filename only
+	GetFileNameAndExtension(buffer, in_file_name);
+
+	// limit length
+	if (wcslen(buffer) > DB_MAX_FILENAME_LENGTH)
 		buffer[DB_MAX_FILENAME_LENGTH] = '\0';
 
 	// convert charmap
@@ -281,12 +314,12 @@ FileTypes DetermineFileType(wchar_t* in_file_name)
 					i++;
 				}
 
-				return FT_Unknown;
+				return FT_BIN;
 			}
 		}
 	}
 
-	return FT_Unknown;
+	return FT_BIN;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

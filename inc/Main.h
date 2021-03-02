@@ -68,6 +68,7 @@ extern bool g_exclude_basic_program;
 extern uint16_t g_lomem_address;
 extern bool g_one_bit_wave_file;
 extern int g_rom_loader_type;
+extern bool g_append_container_files;
 
 extern COMConfigType g_com_config;
 #endif

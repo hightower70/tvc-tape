@@ -64,6 +64,7 @@ bool WFReadSample(int32_t* out_sample);
 void WFCloseInput(void);
 
 bool WFOpenOutput(wchar_t* in_file_name, uint8_t in_bits_per_sample);
+bool WFOpenAppend(wchar_t* in_file_name, uint8_t in_bits_per_sample);
 void WFWriteSample(int32_t in_sample);
 void WFCloseOutput(bool in_force_close);
 

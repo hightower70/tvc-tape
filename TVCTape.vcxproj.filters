@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\BASFile.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BINFile.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CASFile.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CharMap.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\COMPort.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Console.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CRC.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DataBuffer.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DDS.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FileUtils.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HEXFile.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Main.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ROMFile.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ROMLoader.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TAPEFile.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TTPFile.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UARTDevice.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WaveDevice.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WaveFile.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WaveFilter.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WaveLevelControl.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WaveMapper.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ZX7Compress.c">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ZX7Optimize.c">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="inc\BASFile.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\BINFile.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\CASFile.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\CharMap.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\COMPort.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Console.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\CRC.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\DataBuffer.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\DDS.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\FileUtils.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\HEXFile.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Main.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ROMFile.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ROMLoader.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\TAPEFile.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\TTPFile.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\Types.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UARTDevice.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\WaveDevice.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\WaveFile.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\WaveFilter.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\WaveLevelControl.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\WaveMapper.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ZX7Compress.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{80b50a65-5456-43c5-8223-6ef434626688}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{f646958a-8fff-4b48-bff5-1d162c3154bc}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

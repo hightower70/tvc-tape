@@ -298,7 +298,7 @@ bool TAPESave(wchar_t* in_file_name)
 		CRCAddBlock((uint8_t*)&g_db_file_name, tape_file_name_length);
 		success = EncodeBlock((uint8_t*)&g_db_file_name, tape_file_name_length);
 	}
-
+	
 	// write program header
 	if(success)
 	{

@@ -115,7 +115,7 @@ bool WFOpenInput(wchar_t* in_file_name)
 						DisplayError(L"Error: Only mono or stereo format is supported.\n");
 						success = false;
 					}
-					g_input_wave_file_channel_count = format_chunk.NumChannels;
+					g_input_wave_file_channel_count = (uint8_t)format_chunk.NumChannels;
 
 					if((format_chunk.BitsPerSample != 1) && (format_chunk.BitsPerSample != 8) && (format_chunk.BitsPerSample != 16)) 
 					{
@@ -288,6 +288,9 @@ bool WFOpenOutput(wchar_t* in_file_name, uint8_t in_bits_per_sample)
 {
 	ChunkHeaderType chunk_header;
 
+	if (CheckFileExists(in_file_name))
+		return WFOpenAppend(in_file_name, in_bits_per_sample);
+
 	// create file
 	l_output_wav_file_sample_bit_pos = 0;
 	l_output_wav_file_sample_buffer = 0;
@@ -325,6 +328,116 @@ bool WFOpenOutput(wchar_t* in_file_name, uint8_t in_bits_per_sample)
 	return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Appends new samples to the file
+bool WFOpenAppend(wchar_t* in_file_name, uint8_t in_bits_per_sample)
+{
+	bool success = true;
+	RIFFHeaderType riff_header;
+	ChunkHeaderType chunk_header;
+	uint32_t sample_count;
+
+	l_output_wav_file_sample_bit_pos = 0;
+	l_output_wav_file_sample_buffer = 0;
+
+	l_output_wav_file = _wfopen(in_file_name, L"r+b");
+	if (l_output_wav_file == NULL)
+	{
+		DisplayError(L"Error: Can't open file: %s.\n", in_file_name);
+		success = false;
+	}
+
+	// load RIFF header
+	if (success)
+	{
+		fread(&riff_header, sizeof(riff_header), 1, l_output_wav_file);
+
+		if ((riff_header.ChunkID != RIFF_HEADER_CHUNK_ID) || (riff_header.Format != RIFF_HEADER_FORMAT_ID))
+		{
+			DisplayError(L"Error: Invalid file format.\n");
+			success = false;
+		}
+	}
+
+	// read format chunk
+	if (success)
+	{
+		if (fread(&chunk_header, sizeof(chunk_header), 1, l_output_wav_file) == 1)
+		{
+			if (chunk_header.ChunkID == CHUNK_ID_FORMAT)
+			{
+				fread(&l_output_wav_file_format_chunk, sizeof(l_output_wav_file_format_chunk), 1, l_output_wav_file);
+
+				if (l_output_wav_file_format_chunk.AudioFormat != 1)
+				{
+					DisplayError(L"Error: Wav file is not in PCM format.\n");
+					success = false;
+				}
+
+				if (l_output_wav_file_format_chunk.SampleRate != 44100)
+				{
+					DisplayError(L"Error: Wav file sample rate is not 44100Hz.\n");
+					success = false;
+				}
+
+				if (l_output_wav_file_format_chunk.NumChannels != 1)
+				{
+					DisplayError(L"Error: Only mono format is supported.\n");
+					success = false;
+				}
+
+				if (l_output_wav_file_format_chunk.BitsPerSample != in_bits_per_sample)
+				{
+					DisplayError(L"Error: Different sample bit depth specified.\n");
+					success = false;
+				}
+			}
+			else
+			{
+				DisplayError(L"Error: Invalid file format.\n");
+				success = false;
+			}
+		}
+		else
+		{
+			DisplayError(L"Error: Invalid file format.\n");
+			success = false;
+		}
+	}
+
+	// read data chunk
+	{
+		if (fread(&chunk_header, sizeof(chunk_header), 1, l_output_wav_file) == 1)
+		{
+			if (chunk_header.ChunkID == CHUNK_ID_DATA)
+			{
+				l_output_wav_file_sample_count = chunk_header.ChunkSize * 8 / l_output_wav_file_format_chunk.BitsPerSample;
+				fseek(l_output_wav_file, 0, SEEK_END);
+				long f = ftell(l_output_wav_file);
+
+				// write one seconds silence
+				for(sample_count = 0; sample_count < l_output_wav_file_format_chunk.SampleRate; sample_count++)
+				{
+					WMWriteSample(BYTE_SAMPLE_ZERO_VALUE);
+				}
+			}
+			else
+			{
+				DisplayError(L"Error: Invalid file format.\n");
+				success = false;
+			}
+		}
+		else
+		{
+			DisplayError(L"Error: Invalid file format.\n");
+			success = false;
+		}
+	}
+
+	return success;
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // Write sample to the output wave file
 void WFWriteSample(int32_t in_sample)
@@ -355,6 +468,7 @@ void WFWriteSample(int32_t in_sample)
 
 		case 16:
 			fwrite(&in_sample, sizeof(INT16), 1, l_output_wav_file);
+			break;
 	}
 
 	l_output_wav_file_sample_count++;
