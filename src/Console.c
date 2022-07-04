@@ -100,7 +100,7 @@ void DisplayMessageAndClearToLineEnd(const wchar_t* format, ...)
 void PrintLogo(void)
 {
 	if(g_output_message)
-		fwprintf(stderr, L"TVCTape v0.5 (c)2013-2021 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
+		fwprintf(stderr, L"TVCTape v0.6 (c)2013-2022 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -228,6 +228,8 @@ void PrintHelp(void)
 {
 	if(g_output_message)
 	{
+
+		// Options:  -1, -a, -b, -c, -e, -f, -g, -h, -l, -m, -n, -o, -p, -q, -r, -s, -u, -w
 		fwprintf(stderr,
 			L"TVCTape is a free software for converting between Videoton TV Computer\n"
 			L"various program file formats.\n\n"
@@ -279,6 +281,9 @@ void PrintHelp(void)
 			L"     3 - ZX7 compressed loader with border coloring\n"
 			L"  -f When output format is a container file (WAV, TTP), append current content\n"
 			L"     to the existing container\n"
+			L"  -t x - Set Tape checksum (muddle) start value\n"
+			L"         x - checksum start value in decimal number\n"
+			L"         off - checksum usage disabled\n"
 			L"\n"
 			L"  - 'file1' and 'file2' can be 'CAS', 'BAS', 'TTP', 'BIN', 'HEX' (Intel),\n"
 			L"     ROM (Cart), 'WAV' (PCM), 'WAVE:' (wave in/out device),\n"

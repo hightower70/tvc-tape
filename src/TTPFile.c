@@ -213,7 +213,7 @@ bool TTPSave(wchar_t* in_tape_file_name)
 	tape_block_header.SectorsInBlock	= 1;
 	WriteBlock(l_ttp_output_file, &tape_block_header, sizeof(tape_block_header), &success);
 
-	CRCReset();
+	CRCReset(g_checksum_start);
 	CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
 
 	// header block sector start
@@ -248,7 +248,7 @@ bool TTPSave(wchar_t* in_tape_file_name)
 
 	// block leading
 	TAPEInitBlockHeader(&tape_block_header);
-	CRCReset();
+	CRCReset(g_checksum_start);
 	CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
 	WriteBlock(l_ttp_output_file, (uint8_t*)&tape_block_header, sizeof(tape_block_header), &success);
 	
@@ -281,7 +281,7 @@ bool TTPSave(wchar_t* in_tape_file_name)
 
 		WriteBlock(l_ttp_output_file, (uint8_t*)&tape_sector_end, sizeof(tape_sector_end), &success);
 
-		CRCReset();
+		CRCReset(g_checksum_start);
 		sector_index++;
 	}
 

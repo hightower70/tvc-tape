@@ -70,5 +70,8 @@ extern bool g_one_bit_wave_file;
 extern int g_rom_loader_type;
 extern bool g_append_container_files;
 
+extern uint16_t g_checksum_start;
+extern bool g_checksum_off;
+
 extern COMConfigType g_com_config;
 #endif

@@ -272,7 +272,7 @@ bool TAPESave(wchar_t* in_file_name)
 
 	if(success)
 	{
-		CRCReset();
+		CRCReset(g_checksum_start);
 		CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
 		success = EncodeBlock((uint8_t*)&tape_block_header, sizeof(tape_block_header));
 	}
@@ -337,7 +337,7 @@ bool TAPESave(wchar_t* in_file_name)
 	if(success)
 	{
 		TAPEInitBlockHeader(&tape_block_header);
-		CRCReset();
+		CRCReset(g_checksum_start);
 		CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
 		success = EncodeBlock((uint8_t*)&tape_block_header, sizeof(tape_block_header));
 	}
@@ -380,7 +380,7 @@ bool TAPESave(wchar_t* in_file_name)
 		if(success)
 			success = EncodeBlock((uint8_t*)&tape_sector_end, sizeof(tape_sector_end));
 
-		CRCReset();
+		CRCReset(g_checksum_start);
 		sector_index++;
 	}
 
@@ -963,7 +963,7 @@ static LoadStatus StoreByte(uint8_t in_data_byte)
 
 					g_db_buffer_index = 0;
 					g_db_crc_error_detected = false;
-					CRCReset();
+					CRCReset(g_checksum_start);
 					CRCAddBlock(((uint8_t*)&l_block_header + 1), sizeof(l_block_header)-1);
 				}
 				else
@@ -1086,7 +1086,7 @@ static LoadStatus StoreByte(uint8_t in_data_byte)
 				{
 					// header block
 					case TAPE_BLOCKHDR_TYPE_HEADER:
-						if(l_sector_end.CRC == CRCGet())
+						if(l_sector_end.CRC == CRCGet() || g_checksum_off)
 						{
 							g_db_autostart = (l_program_header.Autorun != 0);
 
@@ -1105,7 +1105,7 @@ static LoadStatus StoreByte(uint8_t in_data_byte)
 
 					// data block
 					case TAPE_BLOCKHDR_TYPE_DATA:
-						if(l_sector_end.CRC != CRCGet())
+						if(l_sector_end.CRC != CRCGet() && !g_checksum_off)
 							g_db_crc_error_detected = true;
 
 						// if there is no more data to read
@@ -1125,7 +1125,7 @@ static LoadStatus StoreByte(uint8_t in_data_byte)
 						{
 							// read next sectors
 							ChangeReaderStatus(TRST_SectorHeader);
-							CRCReset();
+							CRCReset(g_checksum_start);
 						}
 						break;
 				}

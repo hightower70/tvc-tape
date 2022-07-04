@@ -65,6 +65,8 @@ bool g_stop_after_one_file = false;
 bool g_one_bit_wave_file = false;
 bool g_exclude_basic_program = false;
 uint16_t g_lomem_address = 6639;
+uint16_t g_checksum_start = 0;
+bool g_checksum_off = false;
 int g_rom_loader_type = 0;
 bool g_append_container_files = false;
 COMConfigType g_com_config;
@@ -905,6 +907,28 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 					{
 						success = false;
 					}	
+					break;
+
+				case 't':
+					if (i + 1 < argc)
+					{
+						i++;
+
+						if (_wcsicmp(argv[i], L"off") == 0)
+						{
+							g_checksum_off = true;
+							g_checksum_start = 0;
+						}
+						else
+						{
+							g_checksum_off = false;
+							g_checksum_start = _wtoi(argv[i]);
+						}
+					}
+					else
+					{
+						success = false;
+					}
 					break;
 
 				case 'r':

@@ -339,6 +339,10 @@ static LoadStatus ParseLine(void)
 				}
 				else
 				{
+					// end data line if colon is found
+					if ((l_basic_line_parser_state & ST_QUOTATION) == 0 && l_unicode_line_buffer[buffer_index] == ':')
+						l_basic_line_parser_state &= ~ST_DATA;
+
 					// tokenize or store characters
 					store_character = true;
 					if(l_basic_line_parser_state == ST_TOKENIZING)
@@ -367,6 +371,13 @@ static LoadStatus ParseLine(void)
 					{
 						// store
 						uch = l_unicode_line_buffer[buffer_index++];
+
+						// convert to uppercase character
+						if ((l_basic_line_parser_state & ST_QUOTATION) == 0)
+						{
+							uch = towupper(uch);
+						}
+
 						if(uch > 0x7f)
 						{
 							// check for hungarian characters
@@ -399,23 +410,20 @@ static LoadStatus ParseLine(void)
 					{
 						if((l_basic_line_parser_state & ST_QUOTATION)==0) 
 						{
-							if(current_token == BAS_TOKEN_DATA)
+							switch(current_token)
 							{
-								l_basic_line_parser_state |= ST_DATA;
-							}
-							else
-							{
-								if(current_token == BAS_TOKEN_COLON)
-								{
-									l_basic_line_parser_state &= ~ST_DATA;
-								}
-								else
-								{
-									 if(current_token == BAS_TOKEN_COMMENT || current_token == BAS_TOKEN_REM)
-									 {
-										 l_basic_line_parser_state |= ST_REMARK;
-									 }
-								}
+								case BAS_TOKEN_DATA:
+									l_basic_line_parser_state |= ST_DATA; 
+									break;
+
+								case BAS_TOKEN_COLON:
+									l_basic_line_parser_state &= ~ST_DATA; 
+									break;
+
+								case BAS_TOKEN_REM:
+								case BAS_TOKEN_COMMENT:
+									l_basic_line_parser_state |= ST_REMARK; 
+									break;
 							}
 						}
 					}

@@ -1,5 +1,5 @@
 ﻿# TVCTape
-Version: 0.5
+Version: 0.6
 
 The TVCTape converts between various tape file format of a vintage 8-bit computer, manufactured by Videoton in Hungary in late eighties. 
 The program can handle frequency modulated audio signal in real time in both direction. This program can be used for direct data transfer between PC and TV Computer using audio connection on the PC and tape connector on the TVC. 
