@@ -46,6 +46,7 @@ static void CloseInputFileList(void);
 static bool ParseWaveGenerationParameters(wchar_t* in_param);
 static bool ParseWavePreprocessingParameters(wchar_t* in_param);
 static bool ProcessCommandLine(int argc, wchar_t **argv);
+static void UpdateStoredFilename(void);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -57,6 +58,7 @@ wchar_t g_output_file_name[MAX_PATH_LENGTH];
 FileTypes g_output_file_type = FT_Unknown;
 wchar_t g_output_wave_file[MAX_PATH_LENGTH];
 wchar_t g_forced_tape_file_name[MAX_PATH_LENGTH];
+bool g_forced_tape_file_name_enabled = false;
 
 int g_forced_autostart = AUTOSTART_NOT_FORCED;
 int g_forced_copyprotect = COPYPROTECT_NOT_FORCED;
@@ -430,47 +432,28 @@ int wmain( int argc, wchar_t **argv )
 								// generate output file name
 								output_file_name[0] = '\0';
 
-								// use forced file name if exists
-								if(g_forced_tape_file_name[0] != '\0')
+								// find file name start
+								buffer_pos = 0;
+								while(g_input_file_name[buffer_pos] != '\0')
 								{
-									// copy filename
-									file_name_length = 0;
-									while(g_forced_tape_file_name[file_name_length] != '\0' && file_name_length < DB_MAX_FILENAME_LENGTH)
+									if(g_input_file_name[buffer_pos] == '\\' || g_input_file_name[buffer_pos] == ':' )
 									{
-										output_file_name[file_name_length] = g_forced_tape_file_name[file_name_length];
-										file_name_length++;
+										file_name_start_pos = buffer_pos;
 									}
 
-									output_file_name[file_name_length] = '\0';
+									buffer_pos++;
 								}
-	
-								// update file name only when it is empty
-								file_name_length = wcslen(output_file_name);
-								if(file_name_length == 0)
+
+								// copy file name
+								file_name_length = 0;
+								while(g_input_file_name[file_name_length] != '\0' && file_name_length < DB_MAX_FILENAME_LENGTH && g_input_file_name[file_name_length] != '.' )
 								{
-									// find file name start
-									buffer_pos = 0;
-									while(g_input_file_name[buffer_pos] != '\0')
-									{
-										if(g_input_file_name[buffer_pos] == '\\' || g_input_file_name[buffer_pos] == ':' )
-										{
-											file_name_start_pos = buffer_pos;
-										}
-
-										buffer_pos++;
-									}
-
-									// copy file name
-									file_name_length = 0;
-									while(g_input_file_name[file_name_length] != '\0' && file_name_length < DB_MAX_FILENAME_LENGTH && g_input_file_name[file_name_length] != '.' )
-									{
-										output_file_name[file_name_length] = g_input_file_name[file_name_start_pos+file_name_length];
-										file_name_length++;
-									}
-									output_file_name[file_name_length] = '\0';
-
-									output_file_type = g_output_file_type;
+									output_file_name[file_name_length] = g_input_file_name[file_name_start_pos+file_name_length];
+									file_name_length++;
 								}
+								output_file_name[file_name_length] = '\0';
+
+								output_file_type = g_output_file_type;
 							}
 						}
 						break;
@@ -551,12 +534,14 @@ int wmain( int argc, wchar_t **argv )
 							{
 								DisplayMessage(L"Saving WAV file: %s", output_file_name);
 							}
+							UpdateStoredFilename();
 							success = TAPESave(output_file_name);
 							break;
 
 						// Wave Out
 						case FT_WaveInOut:
 							DisplayMessage(L"Generating tape signal. Press <ESC> to stop.\n");
+							UpdateStoredFilename();
 							success = TAPESave(output_file_name);
 							break;
 
@@ -566,6 +551,7 @@ int wmain( int argc, wchar_t **argv )
 							{
 								DisplayMessageAndClearToLineEnd(L"Saving: %s", output_file_name);
 							}
+							UpdateStoredFilename();
 							success = TTPSave(output_file_name);
 							break;
 
@@ -668,6 +654,17 @@ static void CloseInputFileList(void)
 	{
 		fclose(l_input_file_name_list);
 		l_input_file_name_list = NULL;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Updates stored filename (WAV, TTP, WaveOut)
+static void UpdateStoredFilename(void)
+{
+	// check if forced file name is active
+	if (g_forced_tape_file_name_enabled)
+	{
+		PCToTVCFilename(g_db_file_name, g_forced_tape_file_name);
 	}
 }
 
@@ -890,6 +887,7 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 					{
 						i++;
 						wcscpy(g_forced_tape_file_name, argv[i]);
+						g_forced_tape_file_name_enabled = true;
 					}
 					else
 					{

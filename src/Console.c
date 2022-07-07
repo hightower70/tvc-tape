@@ -100,7 +100,7 @@ void DisplayMessageAndClearToLineEnd(const wchar_t* format, ...)
 void PrintLogo(void)
 {
 	if(g_output_message)
-		fwprintf(stderr, L"TVCTape v0.6 (c)2013-2022 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
+		fwprintf(stderr, L"TVCTape v0.7 (c)2013-2022 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
