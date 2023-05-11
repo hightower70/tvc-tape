@@ -28,6 +28,7 @@
 #define WAVEOUT_BUFFER_COUNT 4
 #define WAVEIN_BUFFER_LENGTH 8192
 #define WAVEIN_BUFFER_COUNT 16
+#define MAX_BINARY_DIVIDE_POSITION 16
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -74,4 +75,7 @@ extern uint16_t g_checksum_start;
 extern bool g_checksum_off;
 
 extern COMConfigType g_com_config;
+
+extern int g_binary_divide_position;
+
 #endif

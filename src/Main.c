@@ -72,6 +72,7 @@ bool g_checksum_off = false;
 int g_rom_loader_type = 0;
 bool g_append_container_files = false;
 COMConfigType g_com_config;
+int g_binary_divide_position = -1;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module global variables
@@ -207,7 +208,7 @@ int wmain( int argc, wchar_t **argv )
 				}
 
 				// remove trailing new line character
-				pos = wcslen(g_input_file_name);
+				pos = (int)wcslen(g_input_file_name);
 				if(pos > 0 && g_input_file_name[pos-1] == L'\n')
 					g_input_file_name[pos-1] = L'\0';
 
@@ -922,6 +923,22 @@ static bool ProcessCommandLine(int argc, wchar_t **argv)
 							g_checksum_off = false;
 							g_checksum_start = _wtoi(argv[i]);
 						}
+					}
+					else
+					{
+						success = false;
+					}
+					break;
+
+				case 'd':
+					if (i + 1 < argc)
+					{
+						g_binary_divide_position = _wtoi(argv[i + 1]);
+
+						if (g_binary_divide_position > MAX_BINARY_DIVIDE_POSITION || g_binary_divide_position < 0)
+							success = false;
+						else
+							i++;
 					}
 					else
 					{

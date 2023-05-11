@@ -45,7 +45,7 @@ bool ROMSave(wchar_t* in_file_name)
 	int loader_image_size;
 	int compression;
 	uint8_t *output_data;
-	int compressed_size;
+	size_t compressed_size;
 
 	// get loader
 	loader_image = GetCartridgeLoaderBytes(g_rom_loader_type, &loader_image_size, &compression);

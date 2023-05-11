@@ -83,7 +83,7 @@ void DisplayMessageAndClearToLineEnd(const wchar_t* format, ...)
 		vswprintf( (wchar_t*)buffer, SCREEN_WIDTH, format, arglist );
 		va_end( arglist );
 
-		pos = wcslen(buffer);
+		pos = (int)wcslen(buffer);
 		while(pos<SCREEN_WIDTH-1)
 		{
 			buffer[pos++] = ' ';
@@ -100,7 +100,7 @@ void DisplayMessageAndClearToLineEnd(const wchar_t* format, ...)
 void PrintLogo(void)
 {
 	if(g_output_message)
-		fwprintf(stderr, L"TVCTape v0.7 (c)2013-2022 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
+		fwprintf(stderr, L"TVCTape v0.81 (c)2013-2023 Laszlo Arvai <laszlo.arvai@gmail.com>\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -209,7 +209,7 @@ void DisplaySignalLevel(int32_t in_peak_level, bool in_cpu_overload, const wchar
 	vswprintf( (wchar_t*)buffer, SCREEN_WIDTH, in_format, arglist );
 	va_end( arglist );
 
-	i = wcslen(buffer);
+	i = (int)wcslen(buffer);
 	pos += i;
 	while(pos<SCREEN_WIDTH-1)
 	{
@@ -229,7 +229,7 @@ void PrintHelp(void)
 	if(g_output_message)
 	{
 
-		// Options:  -1, -a, -b, -c, -e, -f, -g, -h, -l, -m, -n, -o, -p, -q, -r, -s, -u, -w
+		// Options:  -1, -a, -b, -c, -d, -e, -f, -g, -h, -l, -m, -n, -o, -p, -q, -r, -s, -u, -w
 		fwprintf(stderr,
 			L"TVCTape is a free software for converting between Videoton TV Computer\n"
 			L"various program file formats.\n\n"
@@ -284,6 +284,10 @@ void PrintHelp(void)
 			L"  -t x - Set Tape checksum (muddle) start value\n"
 			L"         x - checksum start value in decimal number\n"
 			L"         off - checksum usage disabled\n"
+			L"  -d x - Divide binary file into two parts. The first x bytes (max 16 bytes)\n"
+			L"         goes into the tape (WAV or TTP) file header and the remaining data\n"
+			L"         bytes goesinto the data part of the tape file.\n"
+			L"         If the output file type is not WAV or TTP, this switch is ignored.\n"
 			L"\n"
 			L"  - 'file1' and 'file2' can be 'CAS', 'BAS', 'TTP', 'BIN', 'HEX' (Intel),\n"
 			L"     ROM (Cart), 'WAV' (PCM), 'WAVE:' (wave in/out device),\n"

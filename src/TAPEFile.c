@@ -258,139 +258,172 @@ bool TAPESave(wchar_t* in_file_name)
 	int sector_size;
 	int tape_file_name_length;
 	bool success = true;
+	int data_length;
+	int data_offset;
 
 	// block leading
 	DisplayOutputHeaderProgress(0, 10);
-	if(success)
-		success = EncodeBlockLeading(BT_Header);
 
-	// write header block	start
-	DisplayOutputHeaderProgress(5, 10);
-	TAPEInitBlockHeader(&tape_block_header);
-	tape_block_header.BlockType = TAPE_BLOCKHDR_TYPE_HEADER;
-	tape_block_header.SectorsInBlock	= 1;
-
-	if(success)
+	// create header block
+	if (g_binary_divide_position != 0)
 	{
-		CRCReset(g_checksum_start);
-		CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
-		success = EncodeBlock((uint8_t*)&tape_block_header, sizeof(tape_block_header));
+		if (success)
+			success = EncodeBlockLeading(BT_Header);
+
+		// write header block	start
+		DisplayOutputHeaderProgress(5, 10);
+		TAPEInitBlockHeader(&tape_block_header);
+		tape_block_header.BlockType = TAPE_BLOCKHDR_TYPE_HEADER;
+		tape_block_header.SectorsInBlock = 1;
+
+		if (success)
+		{
+			CRCReset(g_checksum_start);
+			CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
+			success = EncodeBlock((uint8_t*)&tape_block_header, sizeof(tape_block_header));
+		}
+
+		// header block sector start
+		tape_file_name_length = (int)strlen(g_db_file_name);
+		tape_sector_header.SectorNumber = 0;
+		if (g_binary_divide_position < 0)
+			tape_sector_header.BytesInSector = (uint8_t)(sizeof(uint8_t) + tape_file_name_length + sizeof(cas_program_header));
+		else
+			tape_sector_header.BytesInSector = (uint8_t)(sizeof(uint8_t) + tape_file_name_length + g_binary_divide_position);
+
+			CRCAddBlock(((uint8_t*)&tape_sector_header), sizeof(tape_sector_header));
+			if (success)
+				success = EncodeBlock((uint8_t*)&tape_sector_header, sizeof(tape_sector_header));
+
+			// write tape file name
+			if (success)
+			{
+				CRCAddByte(tape_file_name_length);
+				success = EncodeByte(tape_file_name_length);
+			}
+
+			if (success)
+			{
+				CRCAddBlock((uint8_t*)&g_db_file_name, tape_file_name_length);
+				success = EncodeBlock((uint8_t*)&g_db_file_name, tape_file_name_length);
+			}
+
+			// write program header
+			if (success)
+			{
+				if (g_binary_divide_position < 0)
+				{
+					CASInitHeader(&cas_program_header);
+					CRCAddBlock((uint8_t*)&cas_program_header, sizeof(cas_program_header));
+					success = EncodeBlock((uint8_t*)&cas_program_header, sizeof(cas_program_header));
+				}
+				else
+				{
+					CRCAddBlock((uint8_t*)&g_db_buffer[0], g_binary_divide_position);
+					success = EncodeBlock((uint8_t*)&g_db_buffer[0], g_binary_divide_position);
+				}
+			}
+
+			// write sector end
+			tape_sector_end.EOFFlag = TAPE_SECTOR_NOT_EOF;
+			CRCAddByte(tape_sector_end.EOFFlag);
+
+			tape_sector_end.CRC = CRCGet();
+
+			if (success)
+				success = EncodeBlock((uint8_t*)&tape_sector_end, sizeof(tape_sector_end));
+			DisplayOutputHeaderProgress(10, 10);
+
+			// closing header block
+			if (success)
+				success = GenerateDDSSignal(OffsetFrequency(FREQ_LEADING), 5);
+
+			if (g_output_file_type == FT_WaveInOut)
+				DisplayMessage(L"\n");
 	}
 
-	// header block sector start
-	tape_file_name_length							= strlen(g_db_file_name);
-	tape_sector_header.SectorNumber		= 0;
-	tape_sector_header.BytesInSector	= (uint8_t)(sizeof(uint8_t) + tape_file_name_length + sizeof(cas_program_header));
-
-	CRCAddBlock(((uint8_t*)&tape_sector_header), sizeof(tape_sector_header));
-	if(success)
-		success = EncodeBlock((uint8_t*)&tape_sector_header, sizeof(tape_sector_header));
-
-	// write tape file name
-	if(success)
+	// determine data block length
+	if (g_binary_divide_position < 0)
 	{
-		CRCAddByte(tape_file_name_length);
-		success = EncodeByte(tape_file_name_length);
+		data_length = g_db_buffer_length;
+		data_offset = 0;
 	}
-
-	if(success)
+	else
 	{
-		CRCAddBlock((uint8_t*)&g_db_file_name, tape_file_name_length);
-		success = EncodeBlock((uint8_t*)&g_db_file_name, tape_file_name_length);
+		data_length = g_db_buffer_length - g_binary_divide_position;
+		data_offset = g_binary_divide_position;
 	}
-	
-	// write program header
-	if(success)
-	{
-		CASInitHeader(&cas_program_header);
-		CRCAddBlock((uint8_t*)&cas_program_header, sizeof(cas_program_header));
-		success = EncodeBlock((uint8_t*)&cas_program_header, sizeof(cas_program_header));
-	}
-
-	// write sector end
-	tape_sector_end.EOFFlag = TAPE_SECTOR_NOT_EOF;
-	CRCAddByte(tape_sector_end.EOFFlag);
-
-	tape_sector_end.CRC = CRCGet();
-
-	if(success)
-		success = EncodeBlock((uint8_t*)&tape_sector_end, sizeof(tape_sector_end));
-	DisplayOutputHeaderProgress(10, 10);
-
-	// closing header block
-	if(success)
-		success = GenerateDDSSignal(OffsetFrequency(FREQ_LEADING), 5);
-
-	if(g_output_file_type == FT_WaveInOut)
-		DisplayMessage(L"\n");
 
 	// create data block
-	sector_count = (g_db_buffer_length + 255) / 256;
-	sector_index = 1;
-
-	// data block leading
-	DisplayOutputDataProgress(0, g_db_buffer_length);
-	if(success)
-		success = EncodeBlockLeading(BT_Data);
-
-	// write header block
-	if(success)
+	if (data_length > 0)
 	{
-		TAPEInitBlockHeader(&tape_block_header);
-		CRCReset(g_checksum_start);
-		CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
-		success = EncodeBlock((uint8_t*)&tape_block_header, sizeof(tape_block_header));
+		sector_count = (data_length + 255) / 256;
+		sector_index = 1;
+
+		// data block leading
+		DisplayOutputDataProgress(0, data_length);
+		if (success)
+			success = EncodeBlockLeading(BT_Data);
+
+		// write header block
+		if (success)
+		{
+			TAPEInitBlockHeader(&tape_block_header);
+			CRCReset(g_checksum_start);
+			CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
+			success = EncodeBlock((uint8_t*)&tape_block_header, sizeof(tape_block_header));
+		}
+
+		while (sector_index <= sector_count && success)
+		{
+			// write sector header
+			sector_size = data_length - 256 * (sector_index - 1);
+			if (sector_size > 255)
+				sector_size = 256;
+			else
+			{
+				sector_size = sector_size;
+			}
+
+			DisplayOutputDataProgress((sector_index - 1) * 256 + sector_size, data_length);
+
+			tape_sector_header.SectorNumber = sector_index;
+			tape_sector_header.BytesInSector = (sector_size > 255) ? 0 : (uint8_t)sector_size;
+
+			if (success)
+			{
+				CRCAddBlock((uint8_t*)&tape_sector_header, sizeof(tape_sector_header));
+				success = EncodeBlock((uint8_t*)&tape_sector_header, sizeof(tape_sector_header));
+			}
+
+			// sector data
+			if (success)
+			{
+				CRCAddBlock((uint8_t*)&g_db_buffer[(sector_index - 1) * 256 + data_offset], sector_size);
+				success = EncodeBlock((uint8_t*)&g_db_buffer[(sector_index - 1) * 256 + data_offset], sector_size);
+			}
+
+			// sector end
+			tape_sector_end.EOFFlag = (sector_index == sector_count) ? TAPE_SECTOR_EOF : TAPE_SECTOR_NOT_EOF;
+			CRCAddByte(tape_sector_end.EOFFlag);
+
+			tape_sector_end.CRC = CRCGet();
+
+			if (success)
+				success = EncodeBlock((uint8_t*)&tape_sector_end, sizeof(tape_sector_end));
+
+			CRCReset(g_checksum_start);
+			sector_index++;
+		}
+
+		// closing block
+		if (success)
+			success = GenerateDDSSignal(OffsetFrequency(FREQ_LEADING), 5);
 	}
 
-	while(sector_index <= sector_count && success)
-	{
-		// write sector header
-		sector_size = g_db_buffer_length - 256 * (sector_index - 1);
-		if( sector_size > 255 )
-			sector_size = 256;
-		else
-		{
-			sector_size = sector_size;
-		}
-
-		DisplayOutputDataProgress((sector_index-1)*256 + sector_size, g_db_buffer_length);
-
-		tape_sector_header.SectorNumber		= sector_index;
-		tape_sector_header.BytesInSector	= (sector_size > 255)? 0 : (uint8_t)sector_size;
-
-		if(success)
-		{
-			CRCAddBlock((uint8_t*)&tape_sector_header, sizeof(tape_sector_header));
-			success = EncodeBlock((uint8_t*)&tape_sector_header, sizeof(tape_sector_header));
-		}
-
-		// sector data
-		if(success)
-		{
-			CRCAddBlock((uint8_t*)&g_db_buffer[(sector_index-1)*256], sector_size);
-			success = EncodeBlock((uint8_t*)&g_db_buffer[(sector_index-1)*256], sector_size);
-		}
-
-		// sector end
-		tape_sector_end.EOFFlag = (sector_index == sector_count) ? TAPE_SECTOR_EOF : TAPE_SECTOR_NOT_EOF;
-		CRCAddByte(tape_sector_end.EOFFlag);
-
-		tape_sector_end.CRC = CRCGet();
-
-		if(success)
-			success = EncodeBlock((uint8_t*)&tape_sector_end, sizeof(tape_sector_end));
-
-		CRCReset(g_checksum_start);
-		sector_index++;
-	}
-
-	// closing block
-	if(success)
-		success =	GenerateDDSSignal(OffsetFrequency(FREQ_LEADING), 5);
-
 	if(success)
 	{
-		success = GenerateDDSSilence(50);
+		success = GenerateDDSSilence(1000);
 	}
 
 	if(g_output_file_type == FT_WaveInOut)
@@ -466,8 +499,8 @@ static bool EncodeBlockLeading(BlockType in_block_type)
 {
 	bool success;
 	uint16_t period_count;
-	uint16_t gap_length;
-	uint16_t leading_length;
+	uint16_t gap_length = 0;
+	uint16_t leading_length = 0;
 
 	// determine gap length
 	if (g_gap_length == DEFAULT_GAP_LENGTH)

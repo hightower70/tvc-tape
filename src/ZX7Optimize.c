@@ -79,7 +79,7 @@ Optimal* ZX7Optimize(unsigned char *input_data, size_t input_size) {
         match_index = input_data[i-1] << 8 | input_data[i];
         best_len = 1;
         for (match = &matches[match_index]; match->next != NULL && best_len < MAX_LEN; match = match->next) {
-            offset = i - match->next->index;
+            offset = (int)(i - match->next->index);
             if (offset > MAX_OFFSET) {
                 match->next = NULL;
                 break;
@@ -88,11 +88,11 @@ Optimal* ZX7Optimize(unsigned char *input_data, size_t input_size) {
             for (len = 2; len <= MAX_LEN; len++) {
                 if (len > best_len) {
                     best_len = len;
-                    bits = optimal[i-len].bits + count_bits(offset, len);
+                    bits = optimal[i-len].bits + count_bits(offset, (int)len);
                     if (optimal[i].bits > bits) {
                         optimal[i].bits = bits;
                         optimal[i].offset = offset;
-                        optimal[i].len = len;
+                        optimal[i].len = (int)len;
                     }
                 } else if (i+1 == max[offset]+len && max[offset] != 0) {
                     len = i-min[offset];

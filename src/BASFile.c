@@ -96,7 +96,7 @@ void BASInit(void)
 	for(i=0; i<TOKEN_COUNT; i++)
 	{
 		l_token_length[i].Index = i+128;
-		l_token_length[i].Length = strlen(l_tokenized_ansi_char_map[l_token_length[i].Index]);
+		l_token_length[i].Length = (int)strlen(l_tokenized_ansi_char_map[l_token_length[i].Index]);
 	}
 
 	qsort(l_token_length, TOKEN_COUNT, sizeof(TokenLength), TokenLengthCompare);
@@ -553,7 +553,7 @@ bool BASSave(wchar_t* in_file_name)
 	uint8_t* line_data_end;
 	int state;
 	int current_char;
-	wchar_t* open_options;
+	wchar_t* open_options = L"";
 	int remaining_byte_index;
 	int bytes_in_a_line;
 
@@ -702,7 +702,7 @@ bool BASSave(wchar_t* in_file_name)
 	}
 
 	// write remaining data offset
-	remaining_byte_index = ((uint8_t*)current_line - g_db_buffer) + 1; // +1 beacuse of the BAS_PRGEND byte
+	remaining_byte_index = (int)((uint8_t*)current_line - g_db_buffer) + 1; // +1 beacuse of the BAS_PRGEND byte
 	if(remaining_byte_index < g_db_buffer_length)
 	{
 		if(g_bas_encoding == TET_ANSI)
