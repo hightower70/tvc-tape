@@ -199,6 +199,8 @@ bool TTPSave(wchar_t* in_tape_file_name)
 	uint8_t sector_index;
 	int sector_size;
 	uint8_t tape_file_name_length;
+  int data_length;
+  int data_offset;
 
 	// init
 	tape_file_name_length = (uint8_t)strlen(g_db_file_name);
@@ -217,8 +219,11 @@ bool TTPSave(wchar_t* in_tape_file_name)
 	CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
 
 	// header block sector start
-	sector_header.SectorNumber		= 0;
-	sector_header.BytesInSector	= (uint8_t)sizeof(uint8_t) + tape_file_name_length + (uint8_t)sizeof(cas_program_header);
+	sector_header.SectorNumber	= 0;
+  if (g_binary_divide_position < 0)
+	  sector_header.BytesInSector	= (uint8_t)sizeof(uint8_t) + tape_file_name_length + (uint8_t)sizeof(cas_program_header);
+  else
+    sector_header.BytesInSector = (uint8_t)(sizeof(uint8_t) + tape_file_name_length + g_binary_divide_position);
 
 	CRCAddBlock(((uint8_t*)&sector_header), sizeof(sector_header));
 	WriteBlock(l_ttp_output_file, &sector_header, sizeof(sector_header), &success);
@@ -231,10 +236,18 @@ bool TTPSave(wchar_t* in_tape_file_name)
 	CRCAddBlock((uint8_t*)&g_db_file_name, tape_file_name_length);
 	WriteBlock(l_ttp_output_file, g_db_file_name, tape_file_name_length, &success);
 
-	// write program header
-	CASInitHeader(&cas_program_header);
-	CRCAddBlock((uint8_t*)&cas_program_header, sizeof(cas_program_header));
-	WriteBlock(l_ttp_output_file, &cas_program_header, sizeof(cas_program_header), &success);
+  // write program header
+  if (g_binary_divide_position < 0)
+  {
+    CASInitHeader(&cas_program_header);
+    CRCAddBlock((uint8_t*)&cas_program_header, sizeof(cas_program_header));
+    WriteBlock(l_ttp_output_file, &cas_program_header, sizeof(cas_program_header), &success);
+  }
+  else
+  {
+    CRCAddBlock((uint8_t*)&g_db_buffer[0], g_binary_divide_position);
+    WriteBlock(l_ttp_output_file, &g_db_buffer[0], g_binary_divide_position, &success);
+  }
 	
 	// write sector end
 	tape_sector_end.EOFFlag = TAPE_SECTOR_NOT_EOF;
@@ -242,48 +255,65 @@ bool TTPSave(wchar_t* in_tape_file_name)
 	tape_sector_end.CRC = 0;// CRCGet();
 	WriteBlock(l_ttp_output_file, &tape_sector_end, sizeof(tape_sector_end), &success);
 
-	// create data block
-	sector_count = (g_db_buffer_length + 255) / 256;
-	sector_index = 1;
+  // determine data block length
+  if (g_binary_divide_position < 0)
+  {
+    data_length = g_db_buffer_length;
+    data_offset = 0;
+  }
+  else
+  {
+    data_length = g_db_buffer_length - g_binary_divide_position;
+    data_offset = g_binary_divide_position;
+  }
 
-	// block leading
-	TAPEInitBlockHeader(&tape_block_header);
-	CRCReset(g_checksum_start);
-	CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
-	WriteBlock(l_ttp_output_file, (uint8_t*)&tape_block_header, sizeof(tape_block_header), &success);
-	
-	while(sector_index <= sector_count && success)
-	{
-		// write sector header
-		sector_size = g_db_buffer_length - 256 * (sector_index - 1);
-		if( sector_size > 255 )
-			sector_size = 256;
-		else
-		{
-			sector_size = sector_size;
-		}
+  // create data block
+  if (data_length > 0)
+  {
+    // create data block
+    sector_count = (data_length + 255) / 256;
+    sector_index = 1;
 
-		sector_header.SectorNumber	= sector_index;
-		sector_header.BytesInSector	= (sector_size > 255)? 0 : (uint8_t)sector_size;
+    // block leading
+    TAPEInitBlockHeader(&tape_block_header);
+    tape_block_header.SectorsInBlock = sector_count;
+    CRCReset(g_checksum_start);
+    CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
+    WriteBlock(l_ttp_output_file, (uint8_t*)&tape_block_header, sizeof(tape_block_header), &success);
 
-		CRCAddBlock((uint8_t*)&sector_header, sizeof(sector_header));
-		WriteBlock(l_ttp_output_file, (uint8_t*)&sector_header, sizeof(sector_header), &success);
+    while (sector_index <= sector_count && success)
+    {
+      // write sector header
+      sector_size = data_length - 256 * (sector_index - 1);
+      if (sector_size > 255)
+        sector_size = 256;
+      else
+      {
+        sector_size = sector_size;
+      }
 
-		// sector data
-		CRCAddBlock((uint8_t*)&g_db_buffer[(sector_index-1)*256], sector_size);
-		WriteBlock(l_ttp_output_file, (uint8_t*)&g_db_buffer[(sector_index-1)*256], sector_size, &success);
+      sector_header.SectorNumber = sector_index;
+      sector_header.BytesInSector = (sector_size > 255) ? 0 : (uint8_t)sector_size;
 
-		// sector end
-		tape_sector_end.EOFFlag = (sector_index == sector_count) ? TAPE_SECTOR_EOF : TAPE_SECTOR_NOT_EOF;
-		CRCAddByte(tape_sector_end.EOFFlag);
+      CRCAddBlock((uint8_t*)&sector_header, sizeof(sector_header));
+      WriteBlock(l_ttp_output_file, (uint8_t*)&sector_header, sizeof(sector_header), &success);
 
-		tape_sector_end.CRC = 0;// CRCGet();
+      // sector data
+      CRCAddBlock((uint8_t*)&g_db_buffer[(sector_index - 1) * 256 + data_offset], sector_size);
+      WriteBlock(l_ttp_output_file, (uint8_t*)&g_db_buffer[(sector_index - 1) * 256 + data_offset], sector_size, &success);
 
-		WriteBlock(l_ttp_output_file, (uint8_t*)&tape_sector_end, sizeof(tape_sector_end), &success);
+      // sector end
+      tape_sector_end.EOFFlag = (sector_index == sector_count) ? TAPE_SECTOR_EOF : TAPE_SECTOR_NOT_EOF;
+      CRCAddByte(tape_sector_end.EOFFlag);
 
-		CRCReset(g_checksum_start);
-		sector_index++;
-	}
+      tape_sector_end.CRC = 0;// CRCGet();
+
+      WriteBlock(l_ttp_output_file, (uint8_t*)&tape_sector_end, sizeof(tape_sector_end), &success);
+
+      CRCReset(g_checksum_start);
+      sector_index++;
+    }
+  }
 
 	return success;
 }
@@ -308,31 +338,3 @@ void TTPCloseOutput(void)
 	l_ttp_output_file = NULL;
 }
 
-/*****************************************************************************/
-/* Local functions                                                           */
-/*****************************************************************************/
-
-///////////////////////////////////////////////////////////////////////////////
-// Calculates data block count based on file length
-//static int TTPCalculateDataBlockCount(FILE* in_file)
-//{
-//	int header_block_length;
-//	int data_block_length;
-//	int file_length;
-//	long pos;
-//	int sector_count;
-//
-//	// get file length
-//	pos = ftell(in_file);
-//	fseek(in_file, 0, SEEK_END);
-//	file_length = ftell(in_file);
-//	fseek(in_file, pos, SEEK_SET);
-//
-//	header_block_length = sizeof(TTPFileHeader) + sizeof(TAPEBlockHeaderType) + sizeof(TAPESectorHeaderType) + sizeof(uint8_t) + strlen(g_tape_file_name) + sizeof(CASProgramFileHeaderType) + sizeof(TAPESectorEndType);
-//
-//	data_block_length = file_length - header_block_length - sizeof(TAPESectorHeaderType);
-//
-//	sector_count = (data_block_length + 255 + sizeof(TAPESectorHeaderType) + sizeof(TAPESectorEndType)) / (256 + sizeof(TAPESectorHeaderType) + sizeof(TAPESectorEndType));
-//
-//	return sector_count;
-//}

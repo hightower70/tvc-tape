@@ -369,6 +369,7 @@ bool TAPESave(wchar_t* in_file_name)
 		if (success)
 		{
 			TAPEInitBlockHeader(&tape_block_header);
+      tape_block_header.SectorsInBlock = sector_count;
 			CRCReset(g_checksum_start);
 			CRCAddBlock(((uint8_t*)&tape_block_header.Magic), sizeof(tape_block_header) - sizeof(tape_block_header.Zero));
 			success = EncodeBlock((uint8_t*)&tape_block_header, sizeof(tape_block_header));
